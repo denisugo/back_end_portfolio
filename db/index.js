@@ -1,5 +1,5 @@
 const { Pool } = require("pg");
-const { user, password, sqlPort, sqlHost, database } = require("../config");
+const { user, password, sqlPort, sqlHost, database } = require("../config").sql;
 
 const pool = new Pool({
   user: user,

@@ -1,179 +1,406 @@
-const { assert, expect } = require("chai");
+const { assert } = require("chai");
 const db = require("../db");
 const {
   selectById,
   selectByTableName,
   selectUsernameWithPassword,
+  executeQuery,
+  createTempTable,
+  dropTable,
+  populateTable,
+  insertValues,
+  selectByUsername,
+  updateValuesById,
 } = require("../queries");
 
+const stringCreator = require("../queries/stringCreator");
+
+const { roles, tableNames } = require("../config").constants;
+
 describe("Queries", () => {
-  beforeEach("Create temporary table users", async function () {
-    await db.query("CREATE TEMPORARY TABLE users (LIKE users INCLUDING ALL);"); // This will copy constraints also
+  describe("Public role", () => {
+    beforeEach("Create temporary table logins", async function () {
+      await executeQuery(
+        { db, role: roles.PUBLIC_ROLE, tableName: tableNames.LOGINS },
+        createTempTable
+      );
+      await executeQuery(
+        {
+          db,
+          role: roles.PUBLIC_ROLE,
+          tableName: tableNames.PG_TEMP_LOGINS,
+          columns: "username,password",
+          path: "/Users/denis/projects/back-end-front-end/server/test/temp_table_data/logins.csv",
+        },
+        populateTable
+      );
+    });
 
-    await db.query(
-      "COPY pg_temp.users(id,first_name, last_name, email, username) FROM '/Users/denis/projects/back-end-front-end/server/test/temp_table_data/users.csv' DELIMITER ',' CSV HEADER;"
-    );
-  });
+    afterEach("Drop temporary table logins", async function () {
+      await executeQuery(
+        { db, role: roles.PUBLIC_ROLE, tableName: tableNames.PG_TEMP_LOGINS },
+        dropTable
+      );
+    });
 
-  afterEach("Drop temporary table users", async function () {
-    await db.query("DROP TABLE IF EXISTS pg_temp.users");
-  });
+    beforeEach("Create temporary table products", async function () {
+      await executeQuery(
+        { db, role: roles.PUBLIC_ROLE, tableName: tableNames.PRODUCTS },
+        createTempTable
+      );
+      await executeQuery(
+        {
+          db,
+          role: roles.PUBLIC_ROLE,
+          tableName: tableNames.PG_TEMP_PRODUCTS,
+          columns: "id,name,description,price,category,preview",
+          path: "/Users/denis/projects/back-end-front-end/server/test/temp_table_data/products.csv",
+        },
+        populateTable
+      );
+    });
 
-  beforeEach("Create temporary table logins", async function () {
-    await db.query(
-      "CREATE TEMPORARY TABLE logins (LIKE logins INCLUDING ALL);"
-    ); // This will copy constraints also
+    afterEach("Drop temporary table products", async function () {
+      await executeQuery(
+        { db, role: roles.PUBLIC_ROLE, tableName: tableNames.PG_TEMP_PRODUCTS },
+        dropTable
+      );
+    });
 
-    await db.query(
-      "COPY pg_temp.logins(username,password, is_admin) FROM '/Users/denis/projects/back-end-front-end/server/test/temp_table_data/logins.csv' DELIMITER ',' CSV HEADER;"
-    );
-  });
+    describe("Logins table", () => {
+      describe("selectUsernameWithPassword", () => {
+        it("Should return {exists:true...} if username-password pair exists", async () => {
+          const username = "obreston0";
+          const password = "amiHNVj";
 
-  afterEach("Drop temporary table logins", async function () {
-    await db.query("DROP TABLE IF EXISTS pg_temp.logins");
-  });
+          const expected = {
+            exists: true,
+            username: username,
+          };
 
-  beforeEach("Create temporary table products", async function () {
-    await db.query(
-      "CREATE TEMPORARY TABLE products (LIKE products INCLUDING ALL);"
-    ); // This will copy constraints also
+          const tableName = tableNames.PG_TEMP_LOGINS;
 
-    await db.query(
-      "COPY pg_temp.products(id,name,description,price,category) FROM '/Users/denis/projects/back-end-front-end/server/test/temp_table_data/products.csv' DELIMITER ',' CSV HEADER;"
-    );
-  });
+          const output = await executeQuery(
+            { db, tableName, username, password, role: roles.PUBLIC_ROLE },
+            selectUsernameWithPassword
+          );
 
-  afterEach("Drop temporary table products", async function () {
-    await db.query("DROP TABLE IF EXISTS pg_temp.products");
-  });
+          assert.deepEqual(output, expected);
+        });
 
-  describe("Users table", () => {
-    describe("selectById", () => {
-      it("Should select a user by id", async () => {
-        const id = 1;
-        const expected = {
-          id: 1,
-          first_name: "Martie",
-          last_name: "Hollyer",
-          email: "mhollyer0@whitehouse.gov",
-          username: "mhollyer0",
-        };
-        const tableName = "pg_temp.users";
+        it("Should return {exists:false, is_admin:...} if username-password pair doesn exist", async () => {
+          const username = "obreston0";
+          const password = "fake_password";
 
-        const output = await selectById(db, tableName, id);
+          const expected = {
+            exists: false,
+            username: username,
+          };
 
-        assert.deepEqual(output, expected);
+          const tableName = tableNames.PG_TEMP_LOGINS;
+
+          const output = await executeQuery(
+            { db, tableName, username, password, role: roles.PUBLIC_ROLE },
+            selectUsernameWithPassword
+          );
+
+          assert.deepEqual(output, expected);
+        });
+
+        it("Should return {exists:false, is_admin:...} if sql injection happaned", async () => {
+          const username = "'; DROP TABLE pg_temp.users --";
+          const password = "fake_password";
+
+          const tableName = tableNames.PG_TEMP_LOGINS;
+          const expected = {
+            exists: false,
+            username: username,
+          };
+
+          const output = await executeQuery(
+            { db, tableName, username, password, role: roles.PUBLIC_ROLE },
+            selectUsernameWithPassword
+          );
+
+          assert.deepEqual(output, expected);
+        });
       });
+    });
 
-      it("Should return undefined if id doesnt exist", async () => {
-        const id = 300;
-        const tableName = "pg_temp.users";
+    describe("Products table", () => {
+      describe("selectByTableName", () => {
+        it("Should return array with products", async () => {
+          const tableName = "pg_temp.products";
 
-        const output = await selectById(db, tableName, id);
+          // const output = await selectByTableName(db, tableName);
+          const output = await executeQuery(
+            { db, tableName, role: roles.PUBLIC_ROLE },
+            selectByTableName
+          );
 
-        assert.isUndefined(output);
-      });
+          assert.isArray(output);
+          assert.isObject(output[1]);
+          assert.strictEqual(output.length, 20);
+        });
 
-      it("Should return undefined if sql injection happened", async () => {
-        const id = "';--";
-        const tableName = "pg_temp.users";
+        it("Should return undefined if the table name is wrong", async () => {
+          const tableName = "wrong_name";
 
-        let output = await selectById(db, tableName, id);
+          // const output = await selectByTableName(db, tableName);
+          const output = await executeQuery(
+            { db, tableName, role: roles.PUBLIC_ROLE },
+            selectByTableName
+          );
 
-        assert.isUndefined(output);
+          assert.isUndefined(output);
+        });
       });
     });
   });
 
-  describe("Logins table", () => {
-    describe("selectUsernameWithPassword", () => {
-      it("Should return {exists:true, is_admin:...} if username-password pair exists", async () => {
-        const username = "mhollyer0";
-        const password = "VXiDRSAQ8";
-        const isAdmin = true;
-
-        const expected = {
-          exists: true,
-          username: username,
-          isAdmin: isAdmin,
-        };
-
-        const tableName = "pg_temp.logins";
-        const output = await selectUsernameWithPassword(
+  describe("Registered role", () => {
+    beforeEach("Create temporary table users", async function () {
+      await executeQuery(
+        { db, role: roles.REGISTERED_ROLE, tableName: "users" },
+        createTempTable
+      );
+      await executeQuery(
+        {
           db,
-          tableName,
-          username,
-          password
-        );
+          role: roles.REGISTERED_ROLE,
+          tableName: "pg_temp.users",
+          columns: "id, first_name, last_name, email, username, is_admin",
+          path: "/Users/denis/projects/back-end-front-end/server/test/temp_table_data/users.csv",
+        },
+        populateTable
+      );
+    });
 
-        assert.deepEqual(output, expected);
+    afterEach("Drop temporary table users", async function () {
+      await executeQuery(
+        { db, role: roles.REGISTERED_ROLE, tableName: "pg_temp.users" },
+        dropTable
+      );
+    });
+
+    describe("Users table", () => {
+      describe("selectById", () => {
+        it("Should select a user by id", async () => {
+          const id = 1;
+          const expected = {
+            id: id,
+            first_name: "Obie",
+            last_name: "Breston",
+            email: "obreston0@tmall.com",
+            username: "obreston0",
+            is_admin: false,
+          };
+          const tableName = tableNames.PG_TEMP_USERS;
+
+          //   const output = await selectById({ db, tableName, id });
+          const output = await executeQuery(
+            { db, tableName, id, role: roles.REGISTERED_ROLE },
+            selectById
+          );
+          assert.deepEqual(output, expected);
+        });
+
+        it("Should return undefined if id doesnt exist", async () => {
+          const id = 300;
+          const tableName = tableNames.PG_TEMP_USERS;
+
+          const output = await selectById({ db, tableName, id });
+
+          assert.isUndefined(output);
+        });
+
+        it("Should return undefined if sql injection happened", async () => {
+          const id = "';--";
+          const tableName = tableNames.PG_TEMP_USERS;
+
+          let output = await selectById({ db, tableName, id });
+
+          assert.isUndefined(output);
+        });
       });
 
-      it("Should return {exists:false, is_admin:...} if username-password pair doesn exist", async () => {
-        const username = "mhollyer0";
-        const password = "fake_password";
-        const isAdmin = null;
+      describe("selectByUsername", () => {
+        it("Should select a user by username", async () => {
+          const username = "obreston0";
+          const expected = {
+            id: 1,
+            first_name: "Obie",
+            last_name: "Breston",
+            email: "obreston0@tmall.com",
+            username: "obreston0",
+            is_admin: false,
+          };
+          const tableName = tableNames.PG_TEMP_USERS;
 
-        const expected = {
-          exists: false,
-          username: username,
-          isAdmin: isAdmin,
-        };
+          const output = await executeQuery(
+            { db, tableName, username, role: roles.REGISTERED_ROLE },
+            selectByUsername
+          );
+          assert.deepEqual(output, expected);
+        });
 
-        const tableName = "pg_temp.logins";
-        const output = await selectUsernameWithPassword(
-          db,
-          tableName,
-          username,
-          password
-        );
+        it("Should return undefined if username doesnt exist", async () => {
+          const username = "300";
+          const tableName = tableNames.PG_TEMP_USERS;
 
-        assert.deepEqual(output, expected);
+          const output = await executeQuery(
+            { db, tableName, username, role: roles.REGISTERED_ROLE },
+            selectByUsername
+          );
+
+          assert.isUndefined(output);
+        });
+
+        it("Should return undefined if sql injection happened", async () => {
+          const username = "';--";
+          const tableName = tableNames.PG_TEMP_USERS;
+
+          const output = await executeQuery(
+            { db, tableName, username, role: roles.REGISTERED_ROLE },
+            selectByUsername
+          );
+
+          assert.isUndefined(output);
+        });
       });
+      describe("insertValues", () => {
+        it("Should insert new record to users table", async () => {
+          const username = "robinnho000";
+          const tableName = tableNames.PG_TEMP_USERS;
+          const expected = {
+            first_name: "Robbie",
+            last_name: "Jackson",
+            email: "rj0@tmall.com",
+            username: username,
+            is_admin: false,
+          };
 
-      it("Should return {exists:false, is_admin:...} if sql injection happaned", async () => {
-        const username = "'; DROP TABLE pg_temp.users --";
-        const password = "fake_password";
-        const isAdmin = null;
+          const { values, columns, queryPrepared } =
+            stringCreator.users(expected);
 
-        const tableName = "pg_temp.logins";
-        const expected = {
-          exists: false,
-          username: username,
-          isAdmin: isAdmin,
-        };
+          const output = await executeQuery(
+            {
+              db,
+              tableName,
+              role: roles.REGISTERED_ROLE,
+              columns,
+              values,
+              queryPrepared,
+            },
+            insertValues
+          );
 
-        const output = await selectUsernameWithPassword(
-          db,
-          tableName,
-          username,
-          password
-        );
+          assert.isObject(output);
+          assert.strictEqual(output.username, expected.username);
+        });
 
-        assert.deepEqual(output, expected);
+        it("Should return undefined when input is incorrect", async () => {
+          const username = "robinnho000";
+          const tableName = tableNames.PG_TEMP_USERS;
+          const expected = {
+            first_name: "911",
+            last_name: "Jackson",
+            email: "rj0@tmall.com",
+            username: username,
+            is_admin: null, //incorrect value
+          };
+
+          const { values, columns, queryPrepared } =
+            stringCreator.users(expected);
+
+          const output = await executeQuery(
+            {
+              db,
+              tableName,
+              role: roles.REGISTERED_ROLE,
+              columns,
+              values,
+              queryPrepared,
+            },
+            insertValues
+          );
+
+          assert.isUndefined(output);
+        });
+      });
+      describe("updateValuesById", () => {
+        it("Updates values filtered by id", async () => {
+          const columnName = "first_name";
+          const newValue = "Jessica";
+          const id = 1;
+          const tableName = tableNames.PG_TEMP_USERS;
+
+          const expected = {
+            id: id,
+            first_name: newValue,
+            last_name: "Breston",
+            email: "obreston0@tmall.com",
+            username: "obreston0",
+            is_admin: false,
+          };
+
+          const output = await executeQuery(
+            {
+              db,
+              tableName,
+              role: roles.REGISTERED_ROLE,
+              columnName,
+              newValue,
+              id,
+            },
+            updateValuesById
+          );
+
+          assert.deepEqual(output, expected);
+        });
+
+        it("Returns undefined when the new value is incorrect", async () => {
+          const columnName = "username";
+          const newValue = "mbenedicte1";
+          const id = 1;
+          const tableName = tableNames.PG_TEMP_USERS;
+
+          const output = await executeQuery(
+            {
+              db,
+              tableName,
+              role: roles.REGISTERED_ROLE,
+              columnName,
+              newValue,
+              id,
+            },
+            updateValuesById
+          );
+
+          assert.isUndefined(output);
+        });
       });
     });
+
+    // describe("Carts table", ()=>{
+
+    // })
+    // describe("Logins table", ()=>{
+
+    // })
+    // describe("Orders table", ()=>{
+
+    // })
+    // describe("Orders_Users table", ()=>{
+
+    // })
   });
 
-  describe("Products table", () => {
-    describe("selectByTableName", () => {
-      it("Should return array with products", async () => {
-        const tableName = "pg_temp.products";
+  //   describe("Admin role",()=>{
+  // describe("deleteValues", ()=>{
+  //     it("Deletes values filtered by id",()=>{
 
-        const output = await selectByTableName(db, tableName);
-
-        assert.isArray(output);
-        assert.isObject(output[1]);
-        assert.strictEqual(output.length, 20);
-      });
-
-      it("Should return undefined if the table name is wrong", async () => {
-        const tableName = "wrong_name";
-
-        const output = await selectByTableName(db, tableName);
-
-        assert.isUndefined(output);
-      });
-    });
-  });
+  //     })
+  // })
+  //   })
 });

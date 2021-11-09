@@ -1,11 +1,11 @@
-id,first_name,last_name,email,username
-1,Martie,Hollyer,mhollyer0@whitehouse.gov,mhollyer0
-2,Neel,Episcopio,nepiscopio1@fastcompany.com,nepiscopio1
-3,Giralda,Auston,gauston2@unblog.fr,gauston2
-4,Kath,De Banke,kdebanke3@theatlantic.com,kdebanke3
-5,Mayer,Cuffley,mcuffley4@drupal.org,mcuffley4
-6,Lusa,Airds,lairds5@ovh.net,lairds5
-7,Burg,Cattlow,bcattlow6@google.ru,bcattlow6
-8,De witt,Rowland,drowland7@cafepress.com,drowland7
-9,Kial,Bussons,kbussons8@gov.uk,kbussons8
-10,Rochette,Aughtie,raughtie9@sourceforge.net,raughtie9
+id,first_name,last_name,email,username,is_admin
+1,Obie,Breston,obreston0@tmall.com,obreston0,false
+2,Marys,Benedicte,mbenedicte1@lulu.com,mbenedicte1,false
+3,Maudie,Buey,mbuey2@domainmarket.com,mbuey2,true
+4,Fenelia,Jahnel,fjahnel3@answers.com,fjahnel3,false
+5,Persis,Dowles,pdowles4@networksolutions.com,pdowles4,false
+6,Killie,Kennet,kkennet5@opera.com,kkennet5,false
+7,Elden,Connar,econnar6@mail.ru,econnar6,true
+8,Opalina,Antony,oantony7@printfriendly.com,oantony7,false
+9,Addy,Ingon,aingon8@sourceforge.net,aingon8,true
+10,Xenos,Macbeth,xmacbeth9@symantec.com,xmacbeth9,false

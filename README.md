@@ -5,6 +5,7 @@
 ## Get
 
 - /api/docs
+- /api/v1/login/google
 - /api/v1/users/:id
 - /api/v1/users/:id/cart
 - /api/v1/users/:id/orders
@@ -16,7 +17,8 @@
 
 ## POST
 
-- /api/v1/users/
+- /api/v1/login
+- /api/v1/register
 - /api/v1/users/:id/cart
 - /api/v1/users/:id/orders
 
