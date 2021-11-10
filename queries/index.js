@@ -26,6 +26,14 @@ const executeQuery = async (options, queryCallback = async () => {}) => {
   return queryResult;
 };
 
+const simpleQuery = async ({ db, queryCommand }) => {
+  try {
+    await db.query(queryCommand);
+  } catch (error) {
+    console.error(error);
+  }
+};
+
 /*
  * Could be used for selecting a user, product or order
  */
@@ -44,7 +52,7 @@ const selectById = async ({ db, tableName, id }) => {
 
 /*
  * Could be used for updating rows
- * Should be used only when id is PRIMARY KEY
+ * Should be used only when id is PRIMARY KEY or UNIQUE
  */
 const updateValuesById = async ({
   db,
@@ -66,6 +74,22 @@ const updateValuesById = async ({
     return rows[0];
   } catch (error) {
     console.error(error.message);
+  }
+  return undefined;
+};
+
+/*
+ * Could be used for deleting rows
+ * Should be used only when id is PRIMARY KEY or UNIQUE
+ */
+const deleteValuesById = async ({ db, tableName, id }) => {
+  const params = [id];
+  const query = "DELETE FROM " + tableName + " WHERE " + id + " = $1;";
+  try {
+    await db.query(query, params);
+    return { success: true };
+  } catch (error) {
+    console.error(error);
   }
   return undefined;
 };
@@ -132,7 +156,7 @@ const selectByTableName = async ({ db, tableName }) => {
 /*
  * Could be used for authorisation
  */
-const selectUsernameWithPassword = async ({
+const selectWithUsernameAndPassword = async ({
   db,
   tableName,
   username,
@@ -140,20 +164,28 @@ const selectUsernameWithPassword = async ({
 }) => {
   const params = [username, password];
   const query =
-    "SELECT * FROM " + tableName + " WHERE username = $1 AND password = $2;";
+    "SELECT id,username,is_admin FROM " +
+    tableName +
+    " WHERE username = $1 AND password = $2;";
 
   try {
     const { rows } = await db.query(query, params);
 
-    return {
-      exists: rows[0] ? true : false,
-      username: username,
-    };
+    if (rows[0])
+      return {
+        id: rows[0].id,
+        is_admin: rows[0].is_admin,
+        username: username,
+      };
   } catch (error) {
     console.error(error);
   }
   return undefined;
 };
+
+const selectOrder = async () => {};
+
+const selectCart = async () => {};
 
 const createTempTable = async ({ db, tableName }) => {
   try {
@@ -193,15 +225,11 @@ const populateTable = async ({ db, tableName, columns, path }) => {
   }
 };
 
-const selectOrder = async () => {};
-
-const selectCart = async () => {};
-
 module.exports = {
   selectById,
   selectByUsername,
   selectByTableName,
-  selectUsernameWithPassword,
+  selectWithUsernameAndPassword,
   selectOrder,
   selectCart,
   executeQuery,
@@ -210,4 +238,6 @@ module.exports = {
   populateTable,
   insertValues,
   updateValuesById,
+  simpleQuery,
+  deleteValuesById,
 };

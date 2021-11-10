@@ -15,17 +15,21 @@ const app = {
   port: 3000,
 };
 
+// cookies
+const cookies = {
+  key: "myrandomkey",
+};
+
 // contsants
 const constants = {
   tableNames: {
     USERS: "users",
     PRODUCTS: "products",
-    LOGINS: "logins",
     ORDERS_USERS: "orders_users",
     CARTS: "carts",
+
     PG_TEMP_USERS: "pg_temp.users",
     PG_TEMP_PRODUCTS: "pg_temp.products",
-    PG_TEMP_LOGINS: "pg_temp.logins",
     PG_TEMP_ORDERS_USERS: "pg_temp.orders_users",
     PG_TEMP_CARTS: "pg_temp.carts",
   },
@@ -37,7 +41,8 @@ const constants = {
 };
 
 module.exports = {
-  sql,
   app,
   constants,
+  cookies,
+  sql,
 };
