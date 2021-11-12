@@ -9,10 +9,10 @@ const {
   dropTable,
   populateTable,
   insertValues,
-  selectByUsername,
   updateValuesById,
   simpleQuery,
   deleteValuesById,
+  deleteValuesByOrderId,
 } = require("../queries");
 
 const stringCreator = require("../queries/stringCreator");
@@ -191,6 +191,9 @@ describe("Queries", () => {
           assert.strictEqual(typeof output.is_admin, "boolean");
           assert.strictEqual(typeof output.id, "number");
           assert.strictEqual(typeof output.username, "string");
+          assert.strictEqual(typeof output.first_name, "string");
+          assert.strictEqual(typeof output.last_name, "string");
+          assert.strictEqual(typeof output.email, "string");
         });
 
         it("Should return undefined when password is incorrect", async () => {
@@ -407,7 +410,83 @@ describe("Queries", () => {
 
     afterEach("Drop temporary table users", async function () {
       await executeQuery(
-        { db, role: roles.ADMIN_ROLE, tableName: roles.PG_TEMP_USERS },
+        { db, role: roles.ADMIN_ROLE, tableName: tableNames.PG_TEMP_USERS },
+        dropTable
+      );
+    });
+
+    beforeEach("Create temporary table products", async function () {
+      await executeQuery(
+        { db, role: roles.ADMIN_ROLE, tableName: tableNames.PRODUCTS },
+        createTempTable
+      );
+      await executeQuery(
+        {
+          db,
+          role: roles.ADMIN_ROLE,
+          tableName: tableNames.PG_TEMP_PRODUCTS,
+          columns: "id, name, description, price, category, preview",
+          path: "/Users/denis/projects/back-end-front-end/server/test/temp_table_data/products.csv",
+        },
+        populateTable
+      );
+    });
+
+    afterEach("Drop temporary table products", async function () {
+      await executeQuery(
+        { db, role: roles.ADMIN_ROLE, tableName: tableNames.PG_TEMP_PRODUCTS },
+        dropTable
+      );
+    });
+
+    beforeEach("Create temporary table orders", async function () {
+      await executeQuery(
+        { db, role: roles.ADMIN_ROLE, tableName: tableNames.ORDERS },
+        createTempTable
+      );
+      await executeQuery(
+        {
+          db,
+          role: roles.ADMIN_ROLE,
+          tableName: tableNames.PG_TEMP_ORDERS,
+          columns: "id, product_id, quantity",
+          path: "/Users/denis/projects/back-end-front-end/server/test/temp_table_data/orders.csv",
+        },
+        populateTable
+      );
+    });
+
+    afterEach("Drop temporary table orders", async function () {
+      await executeQuery(
+        { db, role: roles.ADMIN_ROLE, tableName: tableNames.PG_TEMP_ORDERS },
+        dropTable
+      );
+    });
+
+    beforeEach("Create temporary table orders_users", async function () {
+      await executeQuery(
+        { db, role: roles.ADMIN_ROLE, tableName: tableNames.ORDERS_USERS },
+        createTempTable
+      );
+      await executeQuery(
+        {
+          db,
+          role: roles.ADMIN_ROLE,
+          tableName: tableNames.PG_TEMP_ORDERS_USERS,
+          columns: "order_id, user_id",
+          path: "/Users/denis/projects/back-end-front-end/server/test/temp_table_data/orders_users.csv",
+        },
+        populateTable
+      );
+    });
+
+    afterEach("Drop temporary table orders_users", async function () {
+      await executeQuery(
+        {
+          db,
+          role: roles.ADMIN_ROLE,
+          tableName: tableNames.PG_TEMP_ORDERS_USERS,
+        },
         dropTable
       );
     });
@@ -426,10 +505,14 @@ describe("Queries", () => {
 
           assert.strictEqual(output.success, true);
         });
+      });
+    });
 
-        it("Should return undefined when id doesnt exist", async () => {
-          const id = 1000;
-          const tableName = tableNames.PG_TEMP_USERS;
+    describe("Products table", () => {
+      describe("deleteValues", () => {
+        it("Should delete values filtered by id", async () => {
+          const id = 1;
+          const tableName = tableNames.PG_TEMP_PRODUCTS;
           const role = roles.ADMIN_ROLE;
 
           const output = await executeQuery(
@@ -437,7 +520,41 @@ describe("Queries", () => {
             deleteValuesById
           );
 
-          assert.isUndefined(output);
+          assert.strictEqual(output.success, true);
+        });
+      });
+    });
+
+    describe("Orders table", () => {
+      describe("deleteValues", () => {
+        it("Should delete values filtered by id", async () => {
+          const id = 1;
+          const tableName = tableNames.PG_TEMP_ORDERS;
+          const role = roles.ADMIN_ROLE;
+
+          const output = await executeQuery(
+            { db, tableName, role, id },
+            deleteValuesById
+          );
+
+          assert.strictEqual(output.success, true);
+        });
+      });
+    });
+
+    describe("Orders_users table", () => {
+      describe("deleteValues", () => {
+        it("Should delete values filtered by id", async () => {
+          const order_id = 1;
+          const tableName = tableNames.PG_TEMP_ORDERS_USERS;
+          const role = roles.ADMIN_ROLE;
+
+          const output = await executeQuery(
+            { db, tableName, role, order_id },
+            deleteValuesByOrderId
+          );
+
+          assert.strictEqual(output.success, true);
         });
       });
     });

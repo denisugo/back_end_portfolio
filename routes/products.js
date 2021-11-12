@@ -7,8 +7,7 @@ const { constants } = require("../config");
 
 /* GET home page. */
 router.get("/", async (req, res, next) => {
-  const products = await selectByTableName(db, constants.tableNames.PRODUCTS);
-  res.send(products);
+  res.send("products will be here");
 });
 
 module.exports = router;

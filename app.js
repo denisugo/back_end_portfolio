@@ -2,20 +2,28 @@ const createError = require("http-errors");
 const express = require("express");
 const path = require("path");
 const logger = require("morgan");
+const session = require("express-session");
+const passport = require("passport");
+const authSetup = require("./auth/index"); // Should execute passport.use code
 
 const productsRouter = require("./routes/products");
 const usersRouter = require("./routes/users");
+const loginRouter = require("./routes/login");
 
 const app = express();
 
 // basic setup
 app.use(logger("dev"));
+app.use(session({ secret: "cats", resave: false, saveUninitialized: false }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+app.use(passport.initialize());
+app.use(passport.session());
 
 // endpoints
 app.use("/api/v1/products", productsRouter);
 app.use("/api/v1/users", usersRouter);
+app.use("/api/v1/login", loginRouter);
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {

@@ -42,10 +42,10 @@ Only for admins
 
 ## DELETE
 
-- /api/v1/users/:id
 - /api/v1/users/:id/cart
 - /api/v1/users/:id/orders/:id
 
 Only for admins
 
+- /api/v1/users/:id
 - /api/v1/products/:id

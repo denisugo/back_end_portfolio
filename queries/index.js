@@ -2,6 +2,7 @@
  * @param {Object} options
  * @param {String} options.tableName The name of the table
  * @param {Number} options.id id column
+ * @param {Number} options.order_id order_id column
  * @param {Object} options.db Database object
  * @param {String} options.username username column
  * @param {String} options.password password column
@@ -80,11 +81,22 @@ const updateValuesById = async ({
 
 /*
  * Could be used for deleting rows
- * Should be used only when id is PRIMARY KEY or UNIQUE
  */
 const deleteValuesById = async ({ db, tableName, id }) => {
   const params = [id];
-  const query = "DELETE FROM " + tableName + " WHERE " + id + " = $1;";
+  const query = "DELETE FROM " + tableName + " WHERE id = $1;";
+  try {
+    await db.query(query, params);
+    return { success: true };
+  } catch (error) {
+    console.error(error);
+  }
+  return undefined;
+};
+
+const deleteValuesByOrderId = async ({ db, tableName, order_id }) => {
+  const params = [order_id];
+  const query = "DELETE FROM " + tableName + " WHERE order_id = $1;";
   try {
     await db.query(query, params);
     return { success: true };
@@ -164,9 +176,7 @@ const selectWithUsernameAndPassword = async ({
 }) => {
   const params = [username, password];
   const query =
-    "SELECT id,username,is_admin FROM " +
-    tableName +
-    " WHERE username = $1 AND password = $2;";
+    "SELECT * FROM " + tableName + " WHERE username = $1 AND password = $2;";
 
   try {
     const { rows } = await db.query(query, params);
@@ -175,7 +185,10 @@ const selectWithUsernameAndPassword = async ({
       return {
         id: rows[0].id,
         is_admin: rows[0].is_admin,
-        username: username,
+        first_name: rows[0].first_name,
+        last_name: rows[0].last_name,
+        email: rows[0].email,
+        username: rows[0].username,
       };
   } catch (error) {
     console.error(error);
@@ -225,6 +238,8 @@ const populateTable = async ({ db, tableName, columns, path }) => {
   }
 };
 
+//TODO: showCart
+//TODO: showOrders
 module.exports = {
   selectById,
   selectByUsername,
@@ -232,12 +247,13 @@ module.exports = {
   selectWithUsernameAndPassword,
   selectOrder,
   selectCart,
+  updateValuesById,
+  deleteValuesById,
+  deleteValuesByOrderId,
   executeQuery,
   createTempTable,
   dropTable,
   populateTable,
   insertValues,
-  updateValuesById,
   simpleQuery,
-  deleteValuesById,
 };
