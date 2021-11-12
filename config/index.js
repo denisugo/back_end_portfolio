@@ -15,11 +15,6 @@ const app = {
   port: 3000,
 };
 
-// cookies
-const cookies = {
-  key: "myrandomkey",
-};
-
 // contsants
 const constants = {
   tableNames: {
@@ -45,6 +40,5 @@ const constants = {
 module.exports = {
   app,
   constants,
-  cookies,
   sql,
 };

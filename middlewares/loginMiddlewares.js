@@ -16,7 +16,7 @@ const userIdVerification = (req, res, next) => {
   } catch (error) {
     console.error(error);
   }
-  console.log(req.user.id, " ", req.params.id);
+
   res.status(401).send("Unathorized");
 };
 

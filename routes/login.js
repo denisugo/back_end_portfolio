@@ -6,7 +6,7 @@ const passport = require("passport");
 router.get("/", (req, res, next) => {
   res.send("login will be here");
 });
-// TODO: add middlewere that checks if a user is already logged in
+
 router.post(
   "/",
   passport.authenticate("local", { session: true }),

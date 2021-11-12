@@ -9,6 +9,7 @@ const authSetup = require("./auth/index"); // Should execute passport.use code
 const productsRouter = require("./routes/products");
 const usersRouter = require("./routes/users");
 const loginRouter = require("./routes/login");
+const registerRouter = require("./routes/register");
 
 const app = express();
 
@@ -24,6 +25,7 @@ app.use(passport.session());
 app.use("/api/v1/products", productsRouter);
 app.use("/api/v1/users", usersRouter);
 app.use("/api/v1/login", loginRouter);
+app.use("/api/v1/register", registerRouter);
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
@@ -41,3 +43,5 @@ app.use(function (err, req, res, next) {
 });
 
 module.exports = app;
+
+//TODO: add env

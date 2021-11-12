@@ -3,7 +3,7 @@ var router = express.Router();
 const {
   loginVerification,
   userIdVerification,
-} = require("../handlers/loginHandlers");
+} = require("../middlewares/loginMiddlewares");
 
 /* GET user profile. */
 router.get(
