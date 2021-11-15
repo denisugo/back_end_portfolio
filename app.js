@@ -15,7 +15,13 @@ const app = express();
 
 // basic setup
 app.use(logger("dev"));
-app.use(session({ secret: "cats", resave: false, saveUninitialized: false }));
+app.use(
+  session({
+    secret: process.env.SECRET_ENCRYPTION_KEY || "default",
+    resave: false,
+    saveUninitialized: false,
+  })
+);
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(passport.initialize());

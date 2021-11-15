@@ -49,4 +49,4 @@ Only for admins
 - /api/v1/products/:id
 - /api/v1/users/:id/orders/:id
 
-This API doesn't use any hash on passwords and other data. This is beacuse the project will not go to the production phase.
+This API doesn't apply any hash on passwords and other data. This is beacuse the project will not go to the production phase.

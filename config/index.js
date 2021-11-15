@@ -1,19 +1,4 @@
-// this file should be in gitignore
-// but for this project it will be commited
-
-// sql database settings
-const sql = {
-  user: "back_end",
-  password: "password",
-  sqlPort: 5432,
-  sqlHost: "localhost",
-  database: "back_end_portfolio",
-};
-
-// app setting
-const app = {
-  port: 3000,
-};
+require("dotenv").config();
 
 // contsants
 const constants = {
@@ -38,7 +23,5 @@ const constants = {
 };
 
 module.exports = {
-  app,
   constants,
-  sql,
 };
