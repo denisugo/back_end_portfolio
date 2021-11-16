@@ -50,3 +50,10 @@ Only for admins
 - /api/v1/users/:id/orders/:id
 
 This API doesn't apply any hash on passwords and other data. This is beacuse the project will not go to the production phase.
+
+# Pros & Cons
+
+## Cons
+
+- Not all constants were stored in config file
+- Query scripts doesn't provide proper check, if some SQL constrain rules are violeted. It just returns _undefined_ when an error is trown

@@ -7,7 +7,7 @@ const loginVerification = (req, res, next) => {
   } catch (error) {
     console.error(error);
   }
-  res.status(401).send("Unathorized");
+  res.status(401).send("Unauthorized");
 };
 
 const userIdVerification = (req, res, next) => {
@@ -17,7 +17,13 @@ const userIdVerification = (req, res, next) => {
     console.error(error);
   }
 
-  res.status(401).send("Unathorized");
+  res.status(401).send("Unauthorized");
 };
 
-module.exports = { loginVerification, userIdVerification };
+const isAdminVerification = (req, res, next) => {
+  console.log("is admin", req.user.is_admin);
+  if (req.user.is_admin) return next();
+  return res.status(401).send("Unauthorized");
+};
+
+module.exports = { loginVerification, userIdVerification, isAdminVerification };

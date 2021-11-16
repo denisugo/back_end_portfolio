@@ -3,12 +3,10 @@ const { executeQuery, simpleQuery, selectByUsername } = require("../queries");
 const db = require("../db");
 const { tableNames, roles } = require("../config").constants;
 
-let server;
-
 describe("App", () => {
   describe("POST /login", () => {
     describe("Correct cookies", () => {
-      server = request.agent("http://localhost:3000");
+      const server = request.agent("http://localhost:3000");
 
       it("Should log in a user", (done) => {
         const username = "jb";
@@ -28,7 +26,7 @@ describe("App", () => {
     });
 
     describe("Incorrect cookies", () => {
-      server = request.agent("http://localhost:3000");
+      const server = request.agent("http://localhost:3000");
 
       it("Should reject login process when password is incorrect", (done) => {
         const username = "jb";
@@ -48,7 +46,7 @@ describe("App", () => {
     const first_name = "Ronnie";
     const last_name = "Adams";
 
-    server = request.agent("http://localhost:3000");
+    const server = request.agent("http://localhost:3000");
 
     after(async () => {
       const role = roles.ADMIN_ROLE;
@@ -84,4 +82,76 @@ describe("App", () => {
       );
     });
   });
+
+  describe("PUT/users/:id", () => {
+    const server = request.agent("http://localhost:3000");
+
+    const username = "jb";
+    const password = "secret";
+    const id = 1;
+
+    after(async () => {
+      //reset user
+      const tableName = tableNames.USERS;
+      const role = roles.ADMIN_ROLE;
+      const first_name = "Joe";
+      const queryCommand = `UPDATE ${tableName} SET first_name = '${first_name}' WHERE id = ${id};`;
+
+      await executeQuery({ db, role, tableName, queryCommand }, simpleQuery);
+    });
+
+    it("Should change user's first_name", (done) => {
+      const body = { field: "first_name", value: "Jankins" };
+      server
+        .post("/api/v1/login")
+        .send({ username, password })
+        .expect(200)
+        .then(() => {
+          server
+            .put("/api/v1/users/" + id)
+            .send(body)
+            .expect(200, done);
+        });
+    });
+  });
+  describe("DELETE/users/", () => {
+    const server = request.agent("http://localhost:3000");
+
+    const username = "jb";
+    const password = "secret";
+    const id = 2;
+
+    after(async () => {
+      // restore user
+      const role = roles.ADMIN_ROLE;
+      const tableName = tableNames.USERS;
+      const username = "davy000";
+      const password = "treasure";
+      const first_name = "Dave";
+      const last_name = "Sinclair";
+      const email = "	dave.sin@yahoo.com";
+      const is_admin = false;
+
+      const queryCommand = `INSERT INTO ${tableName} VALUES (${id}, '${first_name}', '${last_name}', '${email}', '${username}',${is_admin}, '${password}');`;
+
+      await executeQuery({ db, tableName, role, queryCommand }, simpleQuery);
+    });
+
+    it("Should delete user with id of 2", (done) => {
+      const body = { id };
+      const adminId = 1;
+      server
+        .post("/api/v1/login")
+        .send({ username, password })
+        .expect(200)
+        .then(() => {
+          server
+            .delete("/api/v1/users/" + adminId)
+            .send(body)
+            .expect(204, done);
+        });
+    });
+  });
 });
+
+//TODO: app test for post put delete on users

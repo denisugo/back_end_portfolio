@@ -25,7 +25,7 @@ const authCheck = async (username, password, done) => {
 };
 
 const deserializedUserFinder = async (id, done) => {
-  console.log("deserializing user");
+  console.log("deserializing user", id);
   const role = roles.REGISTERED_ROLE;
   const tableName = tableNames.USERS;
   let user;

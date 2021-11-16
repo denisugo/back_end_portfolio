@@ -31,7 +31,7 @@ const simpleQuery = async ({ db, queryCommand }) => {
   try {
     await db.query(queryCommand);
   } catch (error) {
-    console.error(error);
+    //console.error(error);
   }
 };
 
