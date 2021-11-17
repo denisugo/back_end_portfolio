@@ -6,6 +6,9 @@ const session = require("express-session");
 const passport = require("passport");
 const authSetup = require("./auth/index"); // Should execute passport.use code
 
+const swaggerJsdoc = require("swagger-jsdoc");
+const swaggerUi = require("swagger-ui-express");
+
 const productsRouter = require("./routes/products");
 const usersRouter = require("./routes/users");
 const loginRouter = require("./routes/login");
@@ -32,6 +35,36 @@ app.use("/api/v1/products", productsRouter);
 app.use("/api/v1/users", usersRouter);
 app.use("/api/v1/login", loginRouter);
 app.use("/api/v1/register", registerRouter);
+
+// documentation
+const options = {
+  definition: {
+    openapi: "3.0.0",
+    info: {
+      title: "Portfolio API",
+      version: "0.1.0",
+      description:
+        "This is a simple CRUD API application made with Express and documented with Swagger",
+      license: {
+        name: "None",
+      },
+      contact: {
+        name: "mock",
+        url: "https://mock.com",
+        email: "info@email.com",
+      },
+    },
+    servers: [
+      {
+        url: "http://localhost:3000/api/v1",
+      },
+    ],
+  },
+  apis: ["./routes/login.js", "./routes/users.js"],
+};
+
+const specs = swaggerJsdoc(options);
+app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(specs));
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {

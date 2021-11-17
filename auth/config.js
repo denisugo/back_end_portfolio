@@ -7,6 +7,7 @@ const db = require("../db");
 const { tableNames, roles } = require("../config/index").constants;
 
 const authCheck = async (username, password, done) => {
+  console.log("username " + username);
   const role = roles.PUBLIC_ROLE;
   const tableName = tableNames.USERS;
   try {

@@ -1,5 +1,41 @@
-var express = require("express");
-var router = express.Router();
+/**
+ * @swagger
+ *  components:
+ *    schemas:
+ *      User:
+ *        type: object
+ *        required:
+ *          - username
+ *          - password
+ *          - first_name
+ *          - last_name
+ *          - email
+ *        properties:
+ *          id:
+ *            type: integer
+ *            description: The user's ID
+ *          username:
+ *            type: string
+ *            description: The user's username
+ *          password:
+ *            type: string
+ *            description: The user's password
+ *          first_name:
+ *            type: string
+ *            description: The user's first_name
+ *          last_name:
+ *            type: string
+ *            description: The user's last_name
+ *          email:
+ *            type: string
+ *            description: The user's email
+ *          is_admin:
+ *            type: string
+ *            description: Indicates whether the user is an admin or not
+ */
+
+const express = require("express");
+const router = express.Router();
 const {
   loginVerification,
   userIdVerification,

@@ -1,7 +1,6 @@
 const express = require("express");
 const router = express.Router();
 
-const { selectByTableName } = require("../queries");
 const db = require("../db");
 const { constants } = require("../config");
 

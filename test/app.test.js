@@ -114,7 +114,7 @@ describe("App", () => {
         });
     });
   });
-  describe("DELETE/users/", () => {
+  describe("DELETE/users/:id", () => {
     const server = request.agent("http://localhost:3000");
 
     const username = "jb";
