@@ -152,6 +152,89 @@ describe("App", () => {
         });
     });
   });
-});
 
-//TODO: app test for post put delete on users
+  describe("GET/products", () => {
+    const server = request.agent("http://localhost:3000");
+
+    it("Should send product list", (done) => {
+      server.get("/api/v1/products").expect(200, done);
+    });
+  });
+  describe("GET/products/:id", () => {
+    const server = request.agent("http://localhost:3000");
+
+    it("Should send product list", (done) => {
+      server.get("/api/v1/products/1").expect(200, done);
+    });
+  });
+  describe("POST/products", () => {
+    const body = {
+      name: "random",
+      description: "something about this product",
+      price: 100,
+      category: "health",
+      preview: "www.preview.com/1",
+    };
+
+    //TODO: add after that deletes the newly created product
+    it("Should add a new product to the product list", (done) => {
+      const server = request.agent("http://localhost:3000");
+      const username = "jb";
+      const password = "secret";
+      server
+        .post("/api/v1/login")
+        .send({ username, password })
+        .expect(200)
+        .then(() => {
+          server.post("/api/v1/products/").send(body).expect(201, done);
+        });
+    });
+
+    it("Should send 401 when user is not admin", (done) => {
+      const server = request.agent("http://localhost:3000");
+      server.post("/api/v1/products").send(body).expect(401, done);
+    });
+  });
+  describe("PUT/products/", () => {
+    const body = {
+      field: "price",
+      value: 40,
+    };
+    //TODO: add after that deletes the updates
+    it("Should edit a product in the product list", (done) => {
+      const server = request.agent("http://localhost:3000");
+      const username = "jb";
+      const password = "secret";
+      server
+        .post("/api/v1/login")
+        .send({ username, password })
+        .expect(200)
+        .then(() => {
+          server.put("/api/v1/products/1").send(body).expect(200, done);
+        });
+    });
+    it("Should send 401 when user is not admin", (done) => {
+      const server = request.agent("http://localhost:3000");
+      server.put("/api/v1/products/1").send(body).expect(401, done);
+    });
+  });
+  describe("DELETE/products/", () => {
+    //TODO: add after that restores the product
+    it("Should delete a product from the product list", (done) => {
+      const server = request.agent("http://localhost:3000");
+      const username = "jb";
+      const password = "secret";
+      server
+        .post("/api/v1/login")
+        .send({ username, password })
+        .expect(200)
+        .then(() => {
+          server.delete("/api/v1/products/1").expect(204, done);
+        });
+    });
+    it("Should send 401 when user is not admin", (done) => {
+      const server = request.agent("http://localhost:3000");
+      server.delete("/api/v1/products/1").expect(401, done);
+    });
+  });
+});

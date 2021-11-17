@@ -37,7 +37,7 @@
  *            description: Indicates whether the user is an admin or not
  *
  */
-//TODO: move user schema to user route
+
 /**
  * @swagger
  * tags:
@@ -75,7 +75,7 @@ const passport = require("passport");
 
 /* GET login page. */
 router.get("/", (req, res, next) => {
-  res.send("login will be here");
+  res.send("login will be here soon");
 });
 
 router.post(

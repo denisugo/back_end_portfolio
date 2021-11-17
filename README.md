@@ -5,7 +5,6 @@
 ## Get
 
 - /api/docs
-- /api/v1/users/:id
 - /api/v1/users/:id/cart
 - /api/v1/users/:id/orders
 - /api/v1/users/:id/orders/:id
