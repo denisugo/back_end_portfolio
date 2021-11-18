@@ -12,6 +12,19 @@ const stringCreator = {
       queryPrepared: "$1, $2, $3, $4, $5",
     };
   },
+  products: (productObject) => {
+    return {
+      columns: "name, description, price, category, preview",
+      values: [
+        productObject.name,
+        productObject.description,
+        productObject.price,
+        productObject.category,
+        productObject.preview,
+      ],
+      queryPrepared: "$1, $2, $3, $4, $5",
+    };
+  },
 };
 
 module.exports = stringCreator;

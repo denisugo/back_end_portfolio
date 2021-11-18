@@ -60,7 +60,7 @@ const options = {
       },
     ],
   },
-  apis: ["./routes/login.js", "./routes/users.js"],
+  apis: ["./routes/login.js", "./routes/users.js", "./routes/products.js"],
 };
 
 const specs = swaggerJsdoc(options);
@@ -82,5 +82,3 @@ app.use(function (err, req, res, next) {
 });
 
 module.exports = app;
-
-//TODO: add env

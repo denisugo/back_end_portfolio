@@ -15,6 +15,10 @@ const {
   updateUserData,
   deleteUserData,
 } = require("../middlewares/userMiddleware");
+const {
+  getProductsByCategoryMiddleware,
+  getProductByIdMiddleware,
+} = require("../middlewares/productMiddleware");
 
 describe("Middlewares", () => {
   // mocking functions
@@ -30,6 +34,7 @@ describe("Middlewares", () => {
         },
       };
     },
+    send: (smth) => (sendUsed = smth),
   };
 
   let nextUsed;
@@ -321,6 +326,50 @@ describe("Middlewares", () => {
         assert.strictEqual(nextUsed, false);
         assert.strictEqual(sendUsed, "400 The operation cannot be done");
       });
+    });
+  });
+
+  describe("getProductsByCategoryMiddleware", () => {
+    it("Should send back a list filtered by category", async () => {
+      const category = "health";
+      const req = { query: { category } };
+
+      await getProductsByCategoryMiddleware(req, res, next);
+
+      assert.strictEqual(nextUsed, false);
+      assert.isArray(sendUsed);
+      assert.isObject(sendUsed[0]);
+    });
+    it("Should send back a list with all products", async () => {
+      const category = "The Kroger__"; // wrong category
+      const req = { query: { category } };
+
+      await getProductsByCategoryMiddleware(req, res, next);
+
+      assert.strictEqual(nextUsed, false);
+      assert.isArray(sendUsed);
+      assert.isObject(sendUsed[0]);
+    });
+  });
+
+  describe("getProductByIdMiddleware", () => {
+    it("Should send back the product", async () => {
+      const id = 1;
+      const req = { params: { id } };
+
+      await getProductByIdMiddleware(req, res, next);
+
+      assert.strictEqual(nextUsed, false);
+      assert.isObject(sendUsed);
+    });
+    it("Should send back 404 Not found when id is incorrect", async () => {
+      const id = 1000;
+      const req = { params: { id } };
+
+      await getProductByIdMiddleware(req, res, next);
+
+      assert.strictEqual(nextUsed, false);
+      assert.strictEqual(sendUsed, "404 Not found");
     });
   });
 });

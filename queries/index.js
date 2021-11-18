@@ -6,6 +6,7 @@
  * @param {Object} options.db Database object
  * @param {String} options.username username column
  * @param {String} options.password password column
+ * @param {String} options.category category column of products table
  * @param {String} options.role Role public|registerd|admin
  * @param {String} options.columns Columns to insert into
  * @param {String} options.columnName The name of the column to be updated
@@ -123,8 +124,22 @@ const selectByUsername = async ({ db, tableName, username }) => {
 };
 
 /**
- * Could be used for inserting values to db
+ * Could be used on products table
  */
+const selectByCategory = async ({ db, tableName, category }) => {
+  const params = [category];
+  const query = `SELECT * from ${tableName} WHERE category = $1;`;
+
+  try {
+    const { rows } = await db.query(query, params);
+    if (!rows[0]) return undefined;
+    return rows;
+  } catch (error) {
+    console.error(error);
+  }
+  return undefined;
+};
+
 const insertValues = async ({
   db,
   tableName,
@@ -132,14 +147,7 @@ const insertValues = async ({
   values,
   queryPrepared,
 }) => {
-  const query =
-    "INSERT INTO " +
-    tableName +
-    " (" +
-    columns +
-    ") VALUES (" +
-    queryPrepared +
-    ") RETURNING *;";
+  const query = `INSERT INTO ${tableName}(${columns}) VALUES(${queryPrepared}) RETURNING *;`;
 
   try {
     const { rows } = await db.query(query, values);
@@ -209,6 +217,12 @@ const createTempTable = async ({ db, tableName }) => {
         tableName +
         " INCLUDING ALL);"
     );
+    // await db.query(
+    //   "ALTER SEQUENCE IF EXISTS user_id_seq RESTART WITH 100;"
+    // );
+    // await db.query(
+    //   "ALTER SEQUENCE IF EXISTS product_id_seq RESTART WITH 100;"
+    // );
   } catch (error) {
     console.error(error);
   }
@@ -217,6 +231,7 @@ const createTempTable = async ({ db, tableName }) => {
 const dropTable = async ({ db, tableName }) => {
   try {
     await db.query("DROP TABLE IF EXISTS " + tableName + ";");
+    await db.query("DISCARD TEMP;");
   } catch (error) {
     console.error(error);
   }
@@ -244,6 +259,7 @@ module.exports = {
   selectById,
   selectByUsername,
   selectByTableName,
+  selectByCategory,
   selectWithUsernameAndPassword,
   selectOrder,
   selectCart,

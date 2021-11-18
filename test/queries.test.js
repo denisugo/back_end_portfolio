@@ -4,6 +4,7 @@ const {
   selectById,
   selectByTableName,
   selectWithUsernameAndPassword,
+  selectByCategory,
   executeQuery,
   createTempTable,
   dropTable,
@@ -111,6 +112,36 @@ describe("Queries", () => {
           const output = await executeQuery(
             { db, tableName, role: roles.PUBLIC_ROLE },
             selectByTableName
+          );
+
+          assert.isUndefined(output);
+        });
+      });
+
+      describe("selectByCategory", () => {
+        it("Should return array with products", async () => {
+          const tableName = tableNames.PG_TEMP_PRODUCTS;
+          const role = roles.PUBLIC_ROLE;
+          const category = "The Kroger Co.";
+
+          const output = await executeQuery(
+            { db, tableName, role, category },
+            selectByCategory
+          );
+
+          assert.isArray(output);
+          assert.isObject(output[0]);
+        });
+
+        it("Should return undefined if the category is wrong", async () => {
+          const tableName = tableNames.PG_TEMP_PRODUCTS;
+          const role = roles.PUBLIC_ROLE;
+          const category = "Wrong___name";
+
+          // const output = await selectByTableName(db, tableName);
+          const output = await executeQuery(
+            { db, tableName, role, category },
+            selectByCategory
           );
 
           assert.isUndefined(output);
@@ -390,6 +421,7 @@ describe("Queries", () => {
   });
 
   describe("Admin role", () => {
+    //TODO: check post product with string creator
     beforeEach("Create temporary table users", async function () {
       await executeQuery(
         { db, role: roles.ADMIN_ROLE, tableName: tableNames.USERS },
@@ -521,6 +553,31 @@ describe("Queries", () => {
           );
 
           assert.strictEqual(output.success, true);
+        });
+      });
+
+      describe("Insert values", () => {
+        it("Should insert new values", async () => {
+          const tableName = tableNames.PG_TEMP_PRODUCTS;
+          const role = roles.ADMIN_ROLE;
+
+          const productObject = {
+            name: "cream",
+            description: "new product",
+            price: 100,
+            category: "health",
+            preview: "www.fake.com",
+          };
+
+          const { columns, values, queryPrepared } =
+            stringCreator.products(productObject);
+
+          const output = await executeQuery(
+            { db, tableName, role, columns, values, queryPrepared },
+            insertValues
+          );
+
+          assert.isObject(output);
         });
       });
     });

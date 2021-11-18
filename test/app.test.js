@@ -160,6 +160,13 @@ describe("App", () => {
       server.get("/api/v1/products").expect(200, done);
     });
   });
+  describe("GET/products?category=health", () => {
+    const server = request.agent("http://localhost:3000");
+
+    it("Should send product list", (done) => {
+      server.get("/api/v1/products?category=health").expect(200, done);
+    });
+  });
   describe("GET/products/:id", () => {
     const server = request.agent("http://localhost:3000");
 
