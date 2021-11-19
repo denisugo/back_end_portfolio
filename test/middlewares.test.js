@@ -18,6 +18,7 @@ const {
 const {
   getProductsByCategoryMiddleware,
   getProductByIdMiddleware,
+  postProductMiddleware,
 } = require("../middlewares/productMiddleware");
 
 describe("Middlewares", () => {
@@ -370,6 +371,52 @@ describe("Middlewares", () => {
 
       assert.strictEqual(nextUsed, false);
       assert.strictEqual(sendUsed, "404 Not found");
+    });
+  });
+
+  describe("postProductMiddleware", () => {
+    const name = "La cream";
+    const description = "Cares of your skin";
+    const price = 1;
+    const category = "health";
+    const preview = "www";
+
+    afterEach(async () => {
+      const tableName = tableNames.PRODUCTS;
+      const role = roles.ADMIN_ROLE;
+      const queryCommand = `DELETE FROM ${tableName} WHERE name = '${name}' AND description = '${description}';`;
+      await executeQuery({ db, role, tableName, queryCommand }, simpleQuery);
+    });
+
+    it("Should add a new product", async () => {
+      const body = {
+        name,
+        description,
+        price,
+        category,
+        preview,
+      };
+      const req = { body };
+
+      await postProductMiddleware(req, res, next);
+
+      assert.strictEqual(nextUsed, false);
+      assert.strictEqual(sendUsed.split(" ")[0], "201");
+    });
+    it("Should send back 400 Check your input", async () => {
+      const body = {
+        name,
+        description,
+        price,
+        // category,
+        preview,
+      };
+      const req = { body };
+
+      await postProductMiddleware(req, res, next);
+
+      assert.strictEqual(nextUsed, false);
+      assert.strictEqual(sendUsed, "400 Check your input");
     });
   });
 });

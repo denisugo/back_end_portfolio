@@ -3,9 +3,11 @@ const {
   selectByCategory,
   selectByTableName,
   selectById,
+  insertValues,
 } = require("../queries");
 const db = require("../db");
 const { tableNames, roles } = require("../config").constants;
+const stringCreator = require("../queries/stringCreator");
 
 const tableName = tableNames.PRODUCTS;
 
@@ -40,9 +42,37 @@ const getProductByIdMiddleware = async (req, res, next) => {
   return res.status(404).send("Not found");
 };
 
-const postProductMiddleware = (req, res, next) => {};
-const putProductMiddleware = (req, res, next) => {};
-const deleteProductMiddleware = (req, res, next) => {};
+const postProductMiddleware = async (req, res, next) => {
+  if (req.body) {
+    const body = req.body;
+    if (
+      body.name &&
+      body.description &&
+      body.price &&
+      body.category &&
+      body.preview
+    ) {
+      const role = roles.ADMIN_ROLE;
+      const { columns, values, queryPrepared } = stringCreator.products(body);
+      const inserted = await executeQuery(
+        { db, tableName, role, columns, values, queryPrepared },
+        insertValues
+      );
+      if (inserted) {
+        const allProducts = await executeQuery(
+          { db, role, tableName },
+          selectByTableName
+        );
+
+        if (allProducts) return res.status(201).send(allProducts);
+      }
+    }
+  }
+  return res.status(400).send("Check your input");
+};
+
+const putProductMiddleware = async (req, res, next) => {};
+const deleteProductMiddleware = async (req, res, next) => {};
 
 module.exports = {
   getProductsByCategoryMiddleware,

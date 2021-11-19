@@ -202,23 +202,22 @@ const {
   loginVerification,
   isAdminVerification,
 } = require("../middlewares/loginMiddlewares");
+const {
+  getProductsByCategoryMiddleware,
+  getProductByIdMiddleware,
+  postProductMiddleware,
+} = require("../middlewares/productMiddleware");
+
 const router = express.Router();
 
 /* GET products page. */
-router.get("/", (req, res, next) => {
-  res.send("products will be here " + req.query.category);
-});
+router.get("/", getProductsByCategoryMiddleware);
 
 /* GET product page. */
-router.get("/:id", (req, res, next) => {
-  const id = parseInt(req.params.id);
-  res.send("product will be here, " + id);
-});
+router.get("/:id", getProductByIdMiddleware);
 
 /* POST products page. */
-router.post("/", loginVerification, isAdminVerification, (req, res, next) => {
-  res.status(201).send("products will be here, " + req.body);
-});
+router.post("/", loginVerification, isAdminVerification, postProductMiddleware);
 
 /* PUT product page. */
 router.put("/:id", loginVerification, isAdminVerification, (req, res, next) => {

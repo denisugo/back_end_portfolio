@@ -184,6 +184,13 @@ describe("App", () => {
     };
 
     //TODO: add after that deletes the newly created product
+    afterEach(async () => {
+      const tableName = tableNames.PRODUCTS;
+      const role = roles.ADMIN_ROLE;
+      const queryCommand = `DELETE FROM ${tableName} WHERE name = '${body.name}' AND description = '${body.description}';`;
+      await executeQuery({ db, role, tableName, queryCommand }, simpleQuery);
+    });
+
     it("Should add a new product to the product list", (done) => {
       const server = request.agent("http://localhost:3000");
       const username = "jb";
