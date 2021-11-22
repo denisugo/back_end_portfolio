@@ -4,6 +4,8 @@ const {
   selectByTableName,
   selectById,
   insertValues,
+  updateValuesById,
+  deleteValuesById,
 } = require("../queries");
 const db = require("../db");
 const { tableNames, roles } = require("../config").constants;
@@ -71,8 +73,37 @@ const postProductMiddleware = async (req, res, next) => {
   return res.status(400).send("Check your input");
 };
 
-const putProductMiddleware = async (req, res, next) => {};
-const deleteProductMiddleware = async (req, res, next) => {};
+const putProductMiddleware = async (req, res, next) => {
+  const id = req.params.id;
+  if (req.body && id) {
+    if (req.body.field && req.body.value) {
+      const columnName = req.body.field;
+      const newValue = req.body.value;
+      const tableName = tableNames.PRODUCTS;
+      const role = roles.ADMIN_ROLE;
+      const updated = await executeQuery(
+        { db, role, tableName, columnName, newValue, id },
+        updateValuesById
+      );
+      if (updated) return res.status(200).send("Updated"); //status is set manually for testing purposes
+    }
+  }
+  return res.status(400).send("Cannot be updated");
+};
+
+const deleteProductMiddleware = async (req, res, next) => {
+  const id = req.params.id;
+  if (id) {
+    const role = roles.ADMIN_ROLE;
+
+    const deleted = await executeQuery(
+      { db, tableName, role, id },
+      deleteValuesById
+    );
+    if (deleted) return res.status(204).send("Successfully deleted");
+  }
+  return res.status(400).send("The operation cannot be done");
+};
 
 module.exports = {
   getProductsByCategoryMiddleware,

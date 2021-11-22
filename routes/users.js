@@ -43,16 +43,16 @@ const {
 } = require("../middlewares/loginMiddlewares");
 
 const {
-  deleteUserData,
-  updateUserData,
-  getUser,
-} = require("../middlewares/userMiddleware");
+  deleteUserMiddleware,
+  updateUserMiddleware,
+  getUserMiddleware,
+} = require("../middlewares/userMiddlewares");
 
 /* GET user profile. */
-router.get("/:id", loginVerification, userIdVerification, getUser);
+router.get("/:id", loginVerification, userIdVerification, getUserMiddleware);
 
 /* PUT user profile. */
-router.put("/:id", loginVerification, userIdVerification, updateUserData);
+router.put("/:id", loginVerification, userIdVerification, updateUserMiddleware);
 
 /* DELETE user profile. */
 /* Only admins can delete a user */
@@ -61,7 +61,7 @@ router.delete(
   loginVerification,
   userIdVerification,
   isAdminVerification,
-  deleteUserData
+  deleteUserMiddleware
 );
 
 module.exports = router;

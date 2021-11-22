@@ -12,11 +12,11 @@ const tableName = tableNames.USERS;
 /**
  * Returns teh user, but the password is excluded
  */
-const getUser = (req, res, next) => {
+const getUserMiddleware = (req, res, next) => {
   res.send(req.user);
 };
 
-const updateUserData = async (req, res, next) => {
+const updateUserMiddleware = async (req, res, next) => {
   const role = roles.REGISTERED_ROLE;
   //No need to check if id exists, it should nbe already checked!
   const id = req.user.id;
@@ -31,7 +31,7 @@ const updateUserData = async (req, res, next) => {
         { db, tableName, role, id, newValue, columnName },
         updateValuesById
       );
-      if (updated) return res.status(200).send("Updated");
+      if (updated) return res.status(200).send("Updated"); //status is set manually for testing purposes
 
       if (!updated && columnName === "username")
         return res.status(400).send("This username is probably already in use");
@@ -40,7 +40,7 @@ const updateUserData = async (req, res, next) => {
   return res.status(400).send("Cannot be updated");
 };
 
-const deleteUserData = async (req, res, next) => {
+const deleteUserMiddleware = async (req, res, next) => {
   const role = roles.ADMIN_ROLE;
 
   if (req.body) {
@@ -57,4 +57,8 @@ const deleteUserData = async (req, res, next) => {
   return res.status(400).send("The operation cannot be done");
 };
 
-module.exports = { updateUserData, deleteUserData, getUser };
+module.exports = {
+  updateUserMiddleware,
+  deleteUserMiddleware,
+  getUserMiddleware,
+};

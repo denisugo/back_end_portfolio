@@ -183,7 +183,6 @@ describe("App", () => {
       preview: "www.preview.com/1",
     };
 
-    //TODO: add after that deletes the newly created product
     afterEach(async () => {
       const tableName = tableNames.PRODUCTS;
       const role = roles.ADMIN_ROLE;
@@ -214,7 +213,23 @@ describe("App", () => {
       field: "price",
       value: 40,
     };
-    //TODO: add after that deletes the updates
+
+    after(async () => {
+      // reset product
+      const role = roles.ADMIN_ROLE;
+      const tableName = tableNames.PRODUCTS;
+      const name = "Cream";
+      const description = "Clear your skin";
+      const price = 100;
+      const category = "health";
+      const preview = "treasure";
+      const id = 1;
+
+      const queryCommand = `UPDATE ${tableName} SET (name, description, price, category, preview) = ('${name}', '${description}', '${price}', '${category}', '${preview}') WHERE id = ${id};`;
+
+      await executeQuery({ db, tableName, role, queryCommand }, simpleQuery);
+    });
+
     it("Should edit a product in the product list", (done) => {
       const server = request.agent("http://localhost:3000");
       const username = "jb";
@@ -234,6 +249,22 @@ describe("App", () => {
   });
   describe("DELETE/products/", () => {
     //TODO: add after that restores the product
+    after(async () => {
+      // restore product
+      const role = roles.ADMIN_ROLE;
+      const tableName = tableNames.PRODUCTS;
+      const name = "Cream";
+      const description = "Clear your skin";
+      const price = 100;
+      const category = "health";
+      const preview = "treasure";
+      const id = 1;
+
+      const queryCommand = `INSERT INTO ${tableName} VALUES (${id}, '${name}', '${description}', ${price}, '${category}','${preview}');`;
+
+      await executeQuery({ db, tableName, role, queryCommand }, simpleQuery);
+    });
+
     it("Should delete a product from the product list", (done) => {
       const server = request.agent("http://localhost:3000");
       const username = "jb";

@@ -206,7 +206,9 @@ const {
   getProductsByCategoryMiddleware,
   getProductByIdMiddleware,
   postProductMiddleware,
-} = require("../middlewares/productMiddleware");
+  putProductMiddleware,
+  deleteProductMiddleware,
+} = require("../middlewares/productMiddlewares");
 
 const router = express.Router();
 
@@ -220,18 +222,19 @@ router.get("/:id", getProductByIdMiddleware);
 router.post("/", loginVerification, isAdminVerification, postProductMiddleware);
 
 /* PUT product page. */
-router.put("/:id", loginVerification, isAdminVerification, (req, res, next) => {
-  res.send("products will be updated here, " + req.body);
-});
+router.put(
+  "/:id",
+  loginVerification,
+  isAdminVerification,
+  putProductMiddleware
+);
 
 /* DELETE product page. */
 router.delete(
   "/:id",
   loginVerification,
   isAdminVerification,
-  (req, res, next) => {
-    res.status(204).send("products will be deleted here");
-  }
+  deleteProductMiddleware
 );
 
 module.exports = router;

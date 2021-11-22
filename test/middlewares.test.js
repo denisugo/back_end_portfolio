@@ -12,14 +12,16 @@ const {
 const { registerMiddleware } = require("../middlewares/registerMiddlewares");
 
 const {
-  updateUserData,
-  deleteUserData,
-} = require("../middlewares/userMiddleware");
+  updateUserMiddleware,
+  deleteUserMiddleware,
+} = require("../middlewares/userMiddlewares");
 const {
   getProductsByCategoryMiddleware,
   getProductByIdMiddleware,
   postProductMiddleware,
-} = require("../middlewares/productMiddleware");
+  putProductMiddleware,
+  deleteProductMiddleware,
+} = require("../middlewares/productMiddlewares");
 
 describe("Middlewares", () => {
   // mocking functions
@@ -180,8 +182,8 @@ describe("Middlewares", () => {
     });
   });
 
-  describe("userMiddleware", () => {
-    describe("updateUserData", () => {
+  describe("userMiddlewares", () => {
+    describe("updateUserMiddleware", () => {
       const tableName = tableNames.USERS;
 
       after(async () => {
@@ -206,7 +208,7 @@ describe("Middlewares", () => {
           user: { id: 1 },
         };
 
-        await updateUserData(req, res, next);
+        await updateUserMiddleware(req, res, next);
 
         assert.strictEqual(nextUsed, false);
         assert.strictEqual(sendUsed, "200 Updated");
@@ -217,7 +219,7 @@ describe("Middlewares", () => {
           user: { id: 1 },
         };
 
-        await updateUserData(req, res, next);
+        await updateUserMiddleware(req, res, next);
 
         assert.strictEqual(nextUsed, false);
         assert.strictEqual(sendUsed, "400 Cannot be updated");
@@ -230,7 +232,7 @@ describe("Middlewares", () => {
           user: { id: 1 },
         };
 
-        await updateUserData(req, res, next);
+        await updateUserMiddleware(req, res, next);
 
         assert.strictEqual(nextUsed, false);
         assert.strictEqual(sendUsed, "200 Updated");
@@ -242,7 +244,7 @@ describe("Middlewares", () => {
           user: { id: 1 },
         };
 
-        await updateUserData(req, res, next);
+        await updateUserMiddleware(req, res, next);
 
         assert.strictEqual(nextUsed, false);
         assert.strictEqual(
@@ -258,7 +260,7 @@ describe("Middlewares", () => {
           user: { id: 1 },
         };
 
-        await updateUserData(req, res, next);
+        await updateUserMiddleware(req, res, next);
 
         assert.strictEqual(nextUsed, false);
         assert.strictEqual(sendUsed, "200 Updated");
@@ -271,7 +273,7 @@ describe("Middlewares", () => {
           user: { id: 1 },
         };
 
-        await updateUserData(req, res, next);
+        await updateUserMiddleware(req, res, next);
 
         assert.strictEqual(nextUsed, false);
         assert.strictEqual(sendUsed, "200 Updated");
@@ -284,13 +286,13 @@ describe("Middlewares", () => {
           user: { id: 1 },
         };
 
-        await updateUserData(req, res, next);
+        await updateUserMiddleware(req, res, next);
 
         assert.strictEqual(nextUsed, false);
         assert.strictEqual(sendUsed, "200 Updated");
       });
     });
-    describe("deleteUserData", () => {
+    describe("deleteUserMiddleware", () => {
       const tableName = tableNames.USERS;
 
       afterEach(async () => {
@@ -313,7 +315,7 @@ describe("Middlewares", () => {
         const id = 1;
         const req = { body: { id } };
 
-        await deleteUserData(req, res, next);
+        await deleteUserMiddleware(req, res, next);
 
         assert.strictEqual(nextUsed, false);
         assert.strictEqual(sendUsed, "204 Successfully deleted");
@@ -322,7 +324,7 @@ describe("Middlewares", () => {
       it("Should not delete user if id is not provided", async () => {
         const req = { id: undefined };
 
-        await deleteUserData(req, res, next);
+        await deleteUserMiddleware(req, res, next);
 
         assert.strictEqual(nextUsed, false);
         assert.strictEqual(sendUsed, "400 The operation cannot be done");
@@ -330,93 +332,192 @@ describe("Middlewares", () => {
     });
   });
 
-  describe("getProductsByCategoryMiddleware", () => {
-    it("Should send back a list filtered by category", async () => {
+  describe("productMiddlewares", () => {
+    describe("getProductsByCategoryMiddleware", () => {
+      it("Should send back a list filtered by category", async () => {
+        const category = "health";
+        const req = { query: { category } };
+
+        await getProductsByCategoryMiddleware(req, res, next);
+
+        assert.strictEqual(nextUsed, false);
+        assert.isArray(sendUsed);
+        assert.isObject(sendUsed[0]);
+      });
+      it("Should send back a list with all products", async () => {
+        const category = "The Kroger__"; // wrong category
+        const req = { query: { category } };
+
+        await getProductsByCategoryMiddleware(req, res, next);
+
+        assert.strictEqual(nextUsed, false);
+        assert.isArray(sendUsed);
+        assert.isObject(sendUsed[0]);
+      });
+    });
+
+    describe("getProductByIdMiddleware", () => {
+      it("Should send back the product", async () => {
+        const id = 1;
+        const req = { params: { id } };
+
+        await getProductByIdMiddleware(req, res, next);
+
+        assert.strictEqual(nextUsed, false);
+        assert.isObject(sendUsed);
+      });
+      it("Should send back 404 Not found when id is incorrect", async () => {
+        const id = 1000;
+        const req = { params: { id } };
+
+        await getProductByIdMiddleware(req, res, next);
+
+        assert.strictEqual(nextUsed, false);
+        assert.strictEqual(sendUsed, "404 Not found");
+      });
+    });
+
+    describe("postProductMiddleware", () => {
+      const name = "La cream";
+      const description = "Cares of your skin";
+      const price = 1;
       const category = "health";
-      const req = { query: { category } };
+      const preview = "www";
 
-      await getProductsByCategoryMiddleware(req, res, next);
+      afterEach(async () => {
+        const tableName = tableNames.PRODUCTS;
+        const role = roles.ADMIN_ROLE;
+        const queryCommand = `DELETE FROM ${tableName} WHERE name = '${name}' AND description = '${description}';`;
+        await executeQuery({ db, role, tableName, queryCommand }, simpleQuery);
+      });
 
-      assert.strictEqual(nextUsed, false);
-      assert.isArray(sendUsed);
-      assert.isObject(sendUsed[0]);
-    });
-    it("Should send back a list with all products", async () => {
-      const category = "The Kroger__"; // wrong category
-      const req = { query: { category } };
+      it("Should add a new product", async () => {
+        const body = {
+          name,
+          description,
+          price,
+          category,
+          preview,
+        };
+        const req = { body };
 
-      await getProductsByCategoryMiddleware(req, res, next);
+        await postProductMiddleware(req, res, next);
 
-      assert.strictEqual(nextUsed, false);
-      assert.isArray(sendUsed);
-      assert.isObject(sendUsed[0]);
-    });
-  });
+        assert.strictEqual(nextUsed, false);
+        assert.strictEqual(sendUsed.split(" ")[0], "201");
+      });
+      it("Should send back 400 Check your input", async () => {
+        const body = {
+          name,
+          description,
+          price,
+          // category,
+          preview,
+        };
+        const req = { body };
 
-  describe("getProductByIdMiddleware", () => {
-    it("Should send back the product", async () => {
-      const id = 1;
-      const req = { params: { id } };
+        await postProductMiddleware(req, res, next);
 
-      await getProductByIdMiddleware(req, res, next);
-
-      assert.strictEqual(nextUsed, false);
-      assert.isObject(sendUsed);
-    });
-    it("Should send back 404 Not found when id is incorrect", async () => {
-      const id = 1000;
-      const req = { params: { id } };
-
-      await getProductByIdMiddleware(req, res, next);
-
-      assert.strictEqual(nextUsed, false);
-      assert.strictEqual(sendUsed, "404 Not found");
-    });
-  });
-
-  describe("postProductMiddleware", () => {
-    const name = "La cream";
-    const description = "Cares of your skin";
-    const price = 1;
-    const category = "health";
-    const preview = "www";
-
-    afterEach(async () => {
-      const tableName = tableNames.PRODUCTS;
-      const role = roles.ADMIN_ROLE;
-      const queryCommand = `DELETE FROM ${tableName} WHERE name = '${name}' AND description = '${description}';`;
-      await executeQuery({ db, role, tableName, queryCommand }, simpleQuery);
+        assert.strictEqual(nextUsed, false);
+        assert.strictEqual(sendUsed, "400 Check your input");
+      });
     });
 
-    it("Should add a new product", async () => {
-      const body = {
-        name,
-        description,
-        price,
-        category,
-        preview,
-      };
-      const req = { body };
+    describe("putProductMiddleware", () => {
+      const name = "La cream";
+      const description = "Cares of your skin";
+      const price = 1;
+      const category = "health";
+      const preview = "www";
 
-      await postProductMiddleware(req, res, next);
+      after(async () => {
+        // reset product
+        const role = roles.ADMIN_ROLE;
+        const tableName = tableNames.PRODUCTS;
+        const name = "Cream";
+        const description = "Clear your skin";
+        const price = 100;
+        const category = "health";
+        const preview = "treasure";
+        const id = 1;
 
-      assert.strictEqual(nextUsed, false);
-      assert.strictEqual(sendUsed.split(" ")[0], "201");
+        const queryCommand = `UPDATE ${tableName} SET (name, description, price, category, preview) = ('${name}', '${description}', '${price}', '${category}', '${preview}') WHERE id = ${id};`;
+
+        await executeQuery({ db, tableName, role, queryCommand }, simpleQuery);
+      });
+
+      it("Should update a product's name", async () => {
+        const newName = "Avocado cream";
+        const req = {
+          body: { field: "name", value: newName },
+          params: { id: 1 },
+        };
+
+        await putProductMiddleware(req, res, next);
+
+        assert.strictEqual(nextUsed, false);
+        assert.strictEqual(sendUsed, "200 Updated");
+      });
+      it("Should return '400 Cannot be updated' when no name provided", async () => {
+        const newName = "Avocado cream";
+        const req = {
+          body: { field: "name", value: null },
+          params: { id: 1 },
+        };
+
+        await putProductMiddleware(req, res, next);
+
+        assert.strictEqual(nextUsed, false);
+        assert.strictEqual(sendUsed, "400 Cannot be updated");
+      });
+
+      //  Tests could be expended for all columns in products table, althought admin role got full access to all tables, so it should cover all columns
     });
-    it("Should send back 400 Check your input", async () => {
-      const body = {
-        name,
-        description,
-        price,
-        // category,
-        preview,
-      };
-      const req = { body };
 
-      await postProductMiddleware(req, res, next);
+    describe("deleteProductMiddleware", () => {
+      const name = "La cream";
+      const description = "Cares of your skin";
+      const price = 1;
+      const category = "health";
+      const preview = "www";
 
-      assert.strictEqual(nextUsed, false);
-      assert.strictEqual(sendUsed, "400 Check your input");
+      after(async () => {
+        // restore product
+        const role = roles.ADMIN_ROLE;
+        const tableName = tableNames.PRODUCTS;
+        const name = "Cream";
+        const description = "Clear your skin";
+        const price = 100;
+        const category = "health";
+        const preview = "treasure";
+        const id = 1;
+
+        const queryCommand = `INSERT INTO ${tableName} VALUES (${id}, '${name}', '${description}', ${price}, '${category}','${preview}');`;
+
+        await executeQuery({ db, tableName, role, queryCommand }, simpleQuery);
+      });
+
+      it("Should dalete a product", async () => {
+        const req = {
+          params: { id: 1 },
+        };
+
+        await deleteProductMiddleware(req, res, next);
+
+        assert.strictEqual(nextUsed, false);
+        assert.strictEqual(sendUsed, "204 Successfully deleted");
+      });
+
+      it("Should return '400 The operation cannot be done' if id is not provided", async () => {
+        const req = {
+          params: { id: undefined },
+        };
+
+        await deleteProductMiddleware(req, res, next);
+
+        assert.strictEqual(nextUsed, false);
+        assert.strictEqual(sendUsed, "400 The operation cannot be done");
+      });
     });
   });
 });
