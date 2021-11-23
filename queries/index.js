@@ -3,6 +3,7 @@
  * @param {String} options.tableName The name of the table
  * @param {Number} options.id id column
  * @param {Number} options.order_id order_id column
+ * @param {Number} options.user_id user_id column
  * @param {Object} options.db Database object
  * @param {String} options.username username column
  * @param {String} options.password password column
@@ -37,7 +38,7 @@ const simpleQuery = async ({ db, queryCommand }) => {
 };
 
 /*
- * Could be used for selecting a user, product or order
+ * Could be used for selecting a user, product
  */
 const selectById = async ({ db, tableName, id }) => {
   const params = [id];
@@ -204,9 +205,57 @@ const selectWithUsernameAndPassword = async ({
   return undefined;
 };
 
-const selectOrder = async () => {};
+/*
+ * Could be used for selecting an order
+ */
+const selectByIdMultiple = async ({ db, tableName, id }) => {
+  const params = [id];
+  const query = `SELECT * FROM ${tableName} WHERE id = $1;`;
+  try {
+    const { rows } = await db.query(query, params);
+    return rows;
+  } catch (error) {
+    console.error(error.message);
+  }
+  return undefined;
+};
 
-const selectCart = async () => {};
+/*
+ * Could be used for selecting an order_id from carts or orders_users
+ */
+const selectByUserId = async ({ db, tableName, user_id }) => {
+  const params = [user_id];
+  const query = `SELECT * FROM ${tableName} WHERE user_id = $1;`;
+  try {
+    const { rows } = await db.query(query, params);
+    return rows;
+  } catch (error) {
+    console.error(error.message);
+  }
+  return undefined;
+};
+
+/*
+ * Orders tables have more complex structure and require their own query
+ */
+const selectOrdersByUserId = async ({ db, user_id }) => {
+  const params = [user_id];
+  const query = `SELECT orders.id AS id, 
+  orders_users.shipped AS shipped, 
+  orders.product_id AS product_id, 
+  orders.quantity AS quantity
+  FROM orders_users
+  JOIN orders
+  ON orders.id = orders_users.order_id
+  WHERE orders_users.user_id = $1;`;
+  try {
+    const { rows } = await db.query(query, params);
+    return rows;
+  } catch (error) {
+    console.error(error.message);
+  }
+  return undefined;
+};
 
 const createTempTable = async ({ db, tableName }) => {
   try {
@@ -253,16 +302,17 @@ const populateTable = async ({ db, tableName, columns, path }) => {
   }
 };
 
-//TODO: showCart
-//TODO: showOrders
+//TODO: selectByOrderId
+//TODO: selectByUserId
 module.exports = {
   selectById,
+  selectByIdMultiple,
   selectByUsername,
+  selectByUserId,
+  selectOrdersByUserId,
   selectByTableName,
   selectByCategory,
   selectWithUsernameAndPassword,
-  selectOrder,
-  selectCart,
   updateValuesById,
   deleteValuesById,
   deleteValuesByOrderId,

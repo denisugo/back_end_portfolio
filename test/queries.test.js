@@ -14,6 +14,9 @@ const {
   simpleQuery,
   deleteValuesById,
   deleteValuesByOrderId,
+  selectByIdMultiple,
+  selectByUserId,
+  selectOrdersByUserId,
 } = require("../queries");
 
 const stringCreator = require("../queries/stringCreator");
@@ -22,74 +25,35 @@ const { roles, tableNames } = require("../config").constants;
 
 describe("Queries", () => {
   describe("Public role", () => {
-    beforeEach("Create temporary table products", async function () {
-      await executeQuery(
-        { db, role: roles.PUBLIC_ROLE, tableName: tableNames.PRODUCTS },
-        createTempTable
-      );
-      await executeQuery(
-        {
-          db,
-          role: roles.PUBLIC_ROLE,
-          tableName: tableNames.PG_TEMP_PRODUCTS,
-          columns: "id,name,description,price,category,preview",
-          path: "/Users/denis/projects/back-end-front-end/server/test/temp_table_data/products.csv",
-        },
-        populateTable
-      );
-    });
-
-    afterEach("Drop temporary table products", async function () {
-      await executeQuery(
-        { db, role: roles.PUBLIC_ROLE, tableName: tableNames.PG_TEMP_PRODUCTS },
-        dropTable
-      );
-    });
-
-    beforeEach("Create temporary table users", async function () {
-      await executeQuery(
-        { db, role: roles.ADMIN_ROLE, tableName: tableNames.USERS },
-        createTempTable
-      );
-      await executeQuery(
-        {
-          db,
-          role: roles.ADMIN_ROLE,
-          tableName: tableNames.PG_TEMP_USERS,
-          columns:
-            "id, first_name, last_name, email, username, is_admin, password",
-          path: "/Users/denis/projects/back-end-front-end/server/test/temp_table_data/users.csv",
-        },
-        populateTable
-      );
-
-      // setup
-
-      await executeQuery(
-        {
-          db,
-          role: roles.ADMIN_ROLE,
-          queryCommand:
-            "GRANT SELECT, INSERT(first_name,last_name,email,username,password) ON " +
-            tableNames.PG_TEMP_USERS +
-            " TO " +
-            roles.PUBLIC_ROLE +
-            "; GRANT USAGE ON ALL SEQUENCES IN SCHEMA pg_temp TO " +
-            roles.PUBLIC_ROLE +
-            ";",
-        },
-        simpleQuery
-      );
-    });
-
-    afterEach("Drop temporary table users", async function () {
-      await executeQuery(
-        { db, role: roles.ADMIN_ROLE, tableName: tableNames.PG_TEMP_USERS },
-        dropTable
-      );
-    });
-
     describe("Products table", () => {
+      beforeEach("Create temporary table products", async function () {
+        await executeQuery(
+          { db, role: roles.PUBLIC_ROLE, tableName: tableNames.PRODUCTS },
+          createTempTable
+        );
+        await executeQuery(
+          {
+            db,
+            role: roles.PUBLIC_ROLE,
+            tableName: tableNames.PG_TEMP_PRODUCTS,
+            columns: "id,name,description,price,category,preview",
+            path: "/Users/denis/projects/back-end-front-end/server/test/temp_table_data/products.csv",
+          },
+          populateTable
+        );
+      });
+
+      afterEach("Drop temporary table products", async function () {
+        await executeQuery(
+          {
+            db,
+            role: roles.PUBLIC_ROLE,
+            tableName: tableNames.PG_TEMP_PRODUCTS,
+          },
+          dropTable
+        );
+      });
+
       describe("selectByTableName", () => {
         it("Should return array with products", async () => {
           const tableName = tableNames.PG_TEMP_PRODUCTS;
@@ -150,6 +114,49 @@ describe("Queries", () => {
     });
 
     describe("Users table", () => {
+      beforeEach("Create temporary table users", async function () {
+        await executeQuery(
+          { db, role: roles.ADMIN_ROLE, tableName: tableNames.USERS },
+          createTempTable
+        );
+        await executeQuery(
+          {
+            db,
+            role: roles.ADMIN_ROLE,
+            tableName: tableNames.PG_TEMP_USERS,
+            columns:
+              "id, first_name, last_name, email, username, is_admin, password",
+            path: "/Users/denis/projects/back-end-front-end/server/test/temp_table_data/users.csv",
+          },
+          populateTable
+        );
+
+        // setup
+
+        await executeQuery(
+          {
+            db,
+            role: roles.ADMIN_ROLE,
+            queryCommand:
+              "GRANT SELECT, INSERT(first_name,last_name,email,username,password) ON " +
+              tableNames.PG_TEMP_USERS +
+              " TO " +
+              roles.PUBLIC_ROLE +
+              "; GRANT USAGE ON ALL SEQUENCES IN SCHEMA pg_temp TO " +
+              roles.PUBLIC_ROLE +
+              ";",
+          },
+          simpleQuery
+        );
+      });
+
+      afterEach("Drop temporary table users", async function () {
+        await executeQuery(
+          { db, role: roles.ADMIN_ROLE, tableName: tableNames.PG_TEMP_USERS },
+          dropTable
+        );
+      });
+
       describe("insertValues", () => {
         it("Should insert new record to users table", async () => {
           const tableName = tableNames.PG_TEMP_USERS;
@@ -263,48 +270,48 @@ describe("Queries", () => {
   });
 
   describe("Registered role", () => {
-    beforeEach("Create temporary table users", async function () {
-      await executeQuery(
-        { db, role: roles.ADMIN_ROLE, tableName: tableNames.USERS },
-        createTempTable
-      );
-      await executeQuery(
-        {
-          db,
-          role: roles.ADMIN_ROLE,
-          tableName: tableNames.PG_TEMP_USERS,
-          columns:
-            "id, first_name, last_name, email, username, is_admin, password",
-          path: "/Users/denis/projects/back-end-front-end/server/test/temp_table_data/users.csv",
-        },
-        populateTable
-      );
-
-      // setup
-
-      await executeQuery(
-        {
-          db,
-          role: roles.ADMIN_ROLE,
-          queryCommand:
-            "GRANT SELECT,UPDATE(first_name,last_name,email,username,password) ON " +
-            tableNames.PG_TEMP_USERS +
-            " TO " +
-            roles.REGISTERED_ROLE +
-            ";",
-        },
-        simpleQuery
-      );
-    });
-
-    afterEach("Drop temporary table users", async function () {
-      await executeQuery(
-        { db, role: roles.ADMIN_ROLE, tableName: tableNames.PG_TEMP_USERS },
-        dropTable
-      );
-    });
-
     describe("Users table", () => {
+      beforeEach("Create temporary table users", async function () {
+        await executeQuery(
+          { db, role: roles.ADMIN_ROLE, tableName: tableNames.USERS },
+          createTempTable
+        );
+        await executeQuery(
+          {
+            db,
+            role: roles.ADMIN_ROLE,
+            tableName: tableNames.PG_TEMP_USERS,
+            columns:
+              "id, first_name, last_name, email, username, is_admin, password",
+            path: "/Users/denis/projects/back-end-front-end/server/test/temp_table_data/users.csv",
+          },
+          populateTable
+        );
+
+        // setup
+
+        await executeQuery(
+          {
+            db,
+            role: roles.ADMIN_ROLE,
+            queryCommand:
+              "GRANT SELECT,UPDATE(first_name,last_name,email,username,password) ON " +
+              tableNames.PG_TEMP_USERS +
+              " TO " +
+              roles.REGISTERED_ROLE +
+              ";",
+          },
+          simpleQuery
+        );
+      });
+
+      afterEach("Drop temporary table users", async function () {
+        await executeQuery(
+          { db, role: roles.ADMIN_ROLE, tableName: tableNames.PG_TEMP_USERS },
+          dropTable
+        );
+      });
+
       describe("selectById", () => {
         it("Should select a user by id", async () => {
           const id = 1;
@@ -407,21 +414,275 @@ describe("Queries", () => {
     });
 
     // describe("Carts table", ()=>{
-
     // })
-    // describe("Logins table", ()=>{
 
-    // })
-    // describe("Orders table", ()=>{
+    describe("Orders table", () => {
+      beforeEach("Create temporary table orders", async function () {
+        await executeQuery(
+          { db, role: roles.ADMIN_ROLE, tableName: tableNames.ORDERS },
+          createTempTable
+        );
+        await executeQuery(
+          {
+            db,
+            role: roles.ADMIN_ROLE,
+            tableName: tableNames.PG_TEMP_ORDERS,
+            columns: "id, product_id, quantity",
+            path: "/Users/denis/projects/back-end-front-end/server/test/temp_table_data/orders.csv",
+          },
+          populateTable
+        );
 
-    // })
-    // describe("Orders_Users table", ()=>{
+        // setup
 
-    // })
+        await executeQuery(
+          {
+            db,
+            role: roles.ADMIN_ROLE,
+            queryCommand: `GRANT SELECT,INSERT ON ${tableNames.PG_TEMP_ORDERS} TO ${roles.REGISTERED_ROLE};`,
+          },
+          simpleQuery
+        );
+      });
+
+      afterEach("Drop temporary table orders", async function () {
+        await executeQuery(
+          { db, role: roles.ADMIN_ROLE, tableName: tableNames.PG_TEMP_ORDERS },
+          dropTable
+        );
+      });
+
+      beforeEach("Create temporary table orders_users", async function () {
+        await executeQuery(
+          { db, role: roles.ADMIN_ROLE, tableName: tableNames.ORDERS_USERS },
+          createTempTable
+        );
+        await executeQuery(
+          {
+            db,
+            role: roles.ADMIN_ROLE,
+            tableName: tableNames.PG_TEMP_ORDERS_USERS,
+            columns: "order_id, user_id, shipped",
+            path: "/Users/denis/projects/back-end-front-end/server/test/temp_table_data/orders_users.csv",
+          },
+          populateTable
+        );
+
+        // setup
+
+        await executeQuery(
+          {
+            db,
+            role: roles.ADMIN_ROLE,
+            queryCommand: `GRANT SELECT,INSERT ON ${tableNames.PG_TEMP_ORDERS_USERS} TO ${roles.REGISTERED_ROLE};`,
+          },
+          simpleQuery
+        );
+      });
+
+      afterEach("Drop temporary table orders_users", async function () {
+        await executeQuery(
+          {
+            db,
+            role: roles.ADMIN_ROLE,
+            tableName: tableNames.PG_TEMP_ORDERS_USERS,
+          },
+          dropTable
+        );
+      });
+
+      describe("insertValues", () => {
+        const tableName = tableNames.PG_TEMP_ORDERS;
+        const role = roles.REGISTERED_ROLE;
+
+        it("Should insert values", async () => {
+          const orderObject = {
+            id: 100,
+            product_id: 12,
+            quantity: 2,
+          };
+
+          const { columns, queryPrepared, values } =
+            stringCreator.orders(orderObject);
+
+          const inserted = await executeQuery(
+            { db, tableName, role, columns, queryPrepared, values },
+            insertValues
+          );
+
+          assert.isObject(inserted);
+        });
+
+        it("Should not insert values if it violates PK", async () => {
+          const orderObject = {
+            id: 5,
+            product_id: 16,
+            quantity: 2,
+          }; // values are from temp table data
+
+          const { columns, queryPrepared, values } =
+            stringCreator.orders(orderObject);
+
+          const inserted = await executeQuery(
+            { db, tableName, role, columns, queryPrepared, values },
+            insertValues
+          );
+
+          assert.isUndefined(inserted);
+        });
+      });
+
+      describe("selectOrdersByUserId", () => {
+        const tableName = tableNames.PG_TEMP_ORDERS;
+        const role = roles.REGISTERED_ROLE;
+        it("Should select all order items by user_id", async () => {
+          const user_id = 1;
+
+          const selected = await executeQuery(
+            { db, role, tableName, user_id },
+            selectOrdersByUserId
+          );
+
+          assert.isArray(selected);
+          assert.isObject(selected[0]);
+        });
+
+        it("Should return empty array when id doesnt exist", async () => {
+          const user_id = 1000;
+
+          const selected = await executeQuery(
+            { db, role, tableName, user_id },
+            selectOrdersByUserId
+          );
+
+          assert.isArray(selected);
+          assert.isUndefined(selected[0]);
+        });
+      });
+
+      describe("selectByIdMultiple", () => {
+        const tableName = tableNames.PG_TEMP_ORDERS;
+        const role = roles.REGISTERED_ROLE;
+        it("Should select all order details by an order's id", async () => {
+          const id = 1;
+
+          const selected = await executeQuery(
+            { db, role, tableName, id },
+            selectByIdMultiple
+          );
+
+          assert.isArray(selected);
+          assert.isObject(selected[0]);
+        });
+
+        it("Should return empty array when id doesnt exist", async () => {
+          const id = 1000;
+
+          const selected = await executeQuery(
+            { db, role, tableName, id },
+            selectByIdMultiple
+          );
+
+          assert.isArray(selected);
+          assert.isUndefined(selected[0]);
+        });
+      });
+    });
+
+    // describe("Orders_Users table", () => {
+    //   beforeEach("Create temporary table orders_users", async function () {
+    //     await executeQuery(
+    //       { db, role: roles.ADMIN_ROLE, tableName: tableNames.ORDERS_USERS },
+    //       createTempTable
+    //     );
+    //     await executeQuery(
+    //       {
+    //         db,
+    //         role: roles.ADMIN_ROLE,
+    //         tableName: tableNames.PG_TEMP_ORDERS_USERS,
+    //         columns: "order_id, user_id, shipped",
+    //         path: "/Users/denis/projects/back-end-front-end/server/test/temp_table_data/orders_users.csv",
+    //       },
+    //       populateTable
+    //     );
+
+    //     // setup
+
+    //     await executeQuery(
+    //       {
+    //         db,
+    //         role: roles.ADMIN_ROLE,
+    //         queryCommand: `GRANT SELECT,INSERT ON ${tableNames.PG_TEMP_ORDERS_USERS} TO ${roles.REGISTERED_ROLE};`,
+    //       },
+    //       simpleQuery
+    //     );
+    //   });
+
+    //   afterEach("Drop temporary table orders_users", async function () {
+    //     await executeQuery(
+    //       {
+    //         db,
+    //         role: roles.ADMIN_ROLE,
+    //         tableName: tableNames.PG_TEMP_ORDERS_USERS,
+    //       },
+    //       dropTable
+    //     );
+    //   });
+
+    //   describe("selectByUserId", () => {
+    //     it("Should select orders by user id", async () => {
+    //       const user_id = 1;
+    //       const tableName = tableNames.PG_TEMP_ORDERS_USERS;
+    //       const role = roles.REGISTERED_ROLE;
+
+    //       const selected = await executeQuery(
+    //         { db, role, tableName, user_id },
+    //         selectByUserId
+    //       );
+
+    //       assert.isArray(selected);
+    //       assert.isObject(selected[0]);
+    //     });
+
+    //     it("Should not select orders by user id when user_id doesnt exist", async () => {
+    //       const user_id = 1000;
+    //       const tableName = tableNames.PG_TEMP_ORDERS_USERS;
+    //       const role = roles.REGISTERED_ROLE;
+
+    //       const selected = await executeQuery(
+    //         { db, role, tableName, user_id },
+    //         selectByUserId
+    //       );
+
+    //       assert.isArray(selected);
+    //       assert.isUndefined(selected[0]);
+    //     });
+    //   });
+
+    //   describe("insertValues", () => {
+    //     const tableName = tableNames.PG_TEMP_ORDERS_USERS;
+    //     const role = roles.REGISTERED_ROLE;
+
+    //     it("Should insert values", async () => {
+    //       const ordersUsersObject = {
+    //         user_id: 2,
+    //       };
+
+    //       const { columns, queryPrepared, values } =
+    //         stringCreator.orders_users(ordersUsersObject);
+
+    //       const inserted = await executeQuery(
+    //         { db, tableName, role, columns, queryPrepared, values },
+    //         insertValues
+    //       );
+
+    //       assert.isObject(inserted);
+    //     });
+    //   });
+    // });
   });
 
   describe("Admin role", () => {
-    //TODO: check post product with string creator
     beforeEach("Create temporary table users", async function () {
       await executeQuery(
         { db, role: roles.ADMIN_ROLE, tableName: tableNames.USERS },
@@ -505,7 +766,7 @@ describe("Queries", () => {
           db,
           role: roles.ADMIN_ROLE,
           tableName: tableNames.PG_TEMP_ORDERS_USERS,
-          columns: "order_id, user_id",
+          columns: "order_id, user_id, shipped",
           path: "/Users/denis/projects/back-end-front-end/server/test/temp_table_data/orders_users.csv",
         },
         populateTable
@@ -522,7 +783,7 @@ describe("Queries", () => {
         dropTable
       );
     });
-
+    //TODO: Add test that checks whether deleted user was also deleted from another tables
     describe("Users table", () => {
       describe("deleteValues", () => {
         it("Should delete values filtered by id", async () => {
@@ -556,7 +817,7 @@ describe("Queries", () => {
         });
       });
 
-      describe("Insert values", () => {
+      describe("insertValues", () => {
         it("Should insert new values", async () => {
           const tableName = tableNames.PG_TEMP_PRODUCTS;
           const role = roles.ADMIN_ROLE;

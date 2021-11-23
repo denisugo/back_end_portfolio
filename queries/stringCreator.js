@@ -25,6 +25,20 @@ const stringCreator = {
       queryPrepared: "$1, $2, $3, $4, $5",
     };
   },
+  orders: (orderObject) => {
+    return {
+      columns: "id, product_id, quantity",
+      values: [orderObject.id, orderObject.product_id, orderObject.quantity],
+      queryPrepared: "$1, $2, $3",
+    };
+  },
+  orders_users: (ordersUsersObject) => {
+    return {
+      columns: "user_id",
+      values: [ordersUsersObject.user_id],
+      queryPrepared: "$1",
+    };
+  },
 };
 
 module.exports = stringCreator;

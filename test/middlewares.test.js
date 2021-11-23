@@ -2,7 +2,6 @@ const { assert } = require("chai");
 const { simpleQuery, executeQuery, selectByUsername } = require("../queries");
 const db = require("../db");
 const { tableNames, roles } = require("../config").constants;
-const stringCreator = require("../queries/stringCreator");
 
 const {
   loginVerification,
@@ -22,6 +21,7 @@ const {
   putProductMiddleware,
   deleteProductMiddleware,
 } = require("../middlewares/productMiddlewares");
+const { getOrderByIdMiddleware } = require("../middlewares/orderMiddlewares");
 
 describe("Middlewares", () => {
   // mocking functions
@@ -456,7 +456,7 @@ describe("Middlewares", () => {
         await putProductMiddleware(req, res, next);
 
         assert.strictEqual(nextUsed, false);
-        assert.strictEqual(sendUsed, "200 Updated");
+        assert.strictEqual(sendUsed, "Updated");
       });
       it("Should return '400 Cannot be updated' when no name provided", async () => {
         const newName = "Avocado cream";
@@ -519,5 +519,36 @@ describe("Middlewares", () => {
         assert.strictEqual(sendUsed, "400 The operation cannot be done");
       });
     });
+  });
+
+  describe("orderMiddleware", () => {
+    describe("getOrderByIdMiddleware", () => {
+      it("Should send back an array", async () => {
+        const req = {
+          params: { id: 1 },
+        };
+
+        await getOrderByIdMiddleware(req, res, next);
+
+        assert.isArray(sendUsed);
+        assert.isObject(sendUsed[0]);
+        assert.strictEqual(nextUsed, false);
+      });
+      it("Should send back an empty array when id is incorrect", async () => {
+        const req = {
+          params: { id: 90 },
+        };
+
+        await getOrderByIdMiddleware(req, res, next);
+
+        assert.isArray(sendUsed);
+        assert.isUndefined(sendUsed[0]);
+        assert.strictEqual(nextUsed, false);
+      });
+    });
+    describe("getOrdersByUserMiddleware", () => {});
+    describe("postOrderMiddleware", () => {});
+    describe("putOrderMiddleware", () => {});
+    describe("deleteOrderMiddleware", () => {});
   });
 });

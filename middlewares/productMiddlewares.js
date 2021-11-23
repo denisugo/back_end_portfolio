@@ -85,7 +85,7 @@ const putProductMiddleware = async (req, res, next) => {
         { db, role, tableName, columnName, newValue, id },
         updateValuesById
       );
-      if (updated) return res.status(200).send("Updated"); //status is set manually for testing purposes
+      if (updated) return res.send("Updated");
     }
   }
   return res.status(400).send("Cannot be updated");
