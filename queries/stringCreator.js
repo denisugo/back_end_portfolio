@@ -34,9 +34,9 @@ const stringCreator = {
   },
   orders_users: (ordersUsersObject) => {
     return {
-      columns: "user_id",
-      values: [ordersUsersObject.user_id],
-      queryPrepared: "$1",
+      columns: "user_id, transaction_id",
+      values: [ordersUsersObject.user_id, ordersUsersObject.transaction_id],
+      queryPrepared: "$1, $2",
     };
   },
 };

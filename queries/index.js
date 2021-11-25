@@ -271,7 +271,8 @@ const selectOrdersByUserId = async ({ db, user_id }) => {
   FROM orders_users
   JOIN orders
   ON orders.id = orders_users.order_id
-  WHERE orders_users.user_id = $1;`;
+  WHERE orders_users.user_id = $1
+  ORDER BY 1 DESC;`;
   try {
     const { rows } = await db.query(query, params);
     return rows;

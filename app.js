@@ -60,7 +60,14 @@ const options = {
       },
     ],
   },
-  apis: ["./routes/login.js", "./routes/users.js", "./routes/products.js"],
+  apis: [
+    "./routes/login.js",
+    "./routes/users.js",
+    "./routes/products.js",
+    "./routes/orders.js",
+    "./routes/checkout.js",
+    "./routes/cart.js",
+  ],
 };
 
 const specs = swaggerJsdoc(options);

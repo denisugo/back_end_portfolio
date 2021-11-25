@@ -1,0 +1,190 @@
+/**
+ * @swagger
+ *  components:
+ *    schemas:
+ *
+ *      Order:
+ *        type: object
+ *        properties:
+ *          order_id:
+ *              type: integer
+ *              description: The id of an order
+ *          product_id:
+ *              type: integer
+ *              description: The id of a product
+ *          quantity:
+ *              type: integer
+ *              description: The quantity of a product
+ *          shipped:
+ *              type: boolean
+ *              description: The status of an order
+ *
+ *      Update_order:
+ *        type: object
+ *        required:
+ *          - field
+ *          - value
+ *          - id
+ *          - product_id
+ *        properties:
+ *          id:
+ *              type: integer
+ *              description: The id of an order
+ *          product_id:
+ *              type: integer
+ *              description: The id of a product
+ *          value:
+ *              type: integer
+ *              description: The new quantity to be inserted
+ *          field:
+ *              type: string
+ *              description: The 'quantity'
+ *
+ *      Delete_by_order_id:
+ *        type: object
+ *        required:
+ *          - order_id
+ *        properties:
+ *          order_id:
+ *              type: integer
+ *              description: The id of an order
+ *
+ *      Orders:
+ *        type: array
+ *        items:
+ *          $ref: '#/components/schemas/Order'
+ *
+ */
+
+/**
+ * @swagger
+ * tags:
+ *  name: Orders
+ *  description: Api to your products
+ */
+
+/**
+ * @swagger
+ * users/{id}/orders:
+ *  get:
+ *    summary: Sends back an arry of orders
+ *    tags: [Orders]
+ *    parameters:
+ *      - in: path
+ *        name: id
+ *        required: true
+ *        schema:
+ *          type: integer
+ *
+ *    responses:
+ *      200:
+ *        description: Orders object sent
+ *        content:
+ *          application/json:
+ *            schema:
+ *              $ref: '#/components/schemas/Orders'
+ */
+
+/**
+ * @swagger
+ * users/{id}/orders:
+ *  post:
+ *    summary: Sends back an arry of orders
+ *    tags: [Orders]
+ *    requestBody:
+ *      required: true
+ *      content:
+ *        application/json:
+ *          schema:
+ *            $ref: '#/components/schemas/Cart'
+ *    parameters:
+ *      - in: path
+ *        name: id
+ *        required: true
+ *        schema:
+ *          type: integer
+ *
+ *    responses:
+ *      201:
+ *        description: Your order has been placed
+ *      400:
+ *        description: Check your cart
+ */
+
+/**
+ * @swagger
+ * users/{id}/orders:
+ *  post:
+ *    summary: Sends back an array of orders
+ *    tags: [Orders]
+ *    requestBody:
+ *      required: true
+ *      content:
+ *        application/json:
+ *          schema:
+ *            $ref: '#/components/schemas/Checkout'
+ *    parameters:
+ *      - in: path
+ *        name: id
+ *        required: true
+ *        schema:
+ *          type: integer
+ *
+ *    responses:
+ *      201:
+ *        description: Your order has been placed
+ *      400:
+ *        description: Check your cart
+ */
+
+/**
+ * @swagger
+ * users/{id}/orders:
+ *  put:
+ *    summary: Updates a quantity of an order
+ *    tags: [Orders]
+ *    requestBody:
+ *      required: true
+ *      content:
+ *        application/json:
+ *          schema:
+ *            $ref: '#/components/schemas/Update_order'
+ *    parameters:
+ *      - in: path
+ *        name: id
+ *        required: true
+ *        schema:
+ *          type: integer
+ *
+ *    responses:
+ *      200:
+ *        description: Updated
+ *      400:
+ *        description: Cannot be updated
+ */
+
+/**
+ * @swagger
+ * users/{id}/orders:
+ *  delete:
+ *    summary: Deletes an order
+ *    tags: [Orders]
+ *    requestBody:
+ *      required: true
+ *      content:
+ *        application/json:
+ *          schema:
+ *            $ref: '#/components/schemas/Delete_by_order_id'
+ *    parameters:
+ *      - in: path
+ *        name: id
+ *        required: true
+ *        schema:
+ *          type: integer
+ *
+ *    responses:
+ *      204:
+ *        description: Successfully deleted
+ *      400:
+ *        description: The operation cannot be done
+ */

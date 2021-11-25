@@ -43,10 +43,12 @@ const getOrdersByUserMiddleware = async (req, res, next) => {
 const postOrderMiddleware = async (req, res, next) => {
   if (req.body) {
     const cart = req.body.cart;
-    if (cart) {
+    const transaction_id = req.body.transaction_id;
+    if (cart && transaction_id) {
       const user_id = req.user.id;
       const ordersUsersQueryValuesColumns = stringCreator.orders_users({
         user_id,
+        transaction_id,
       });
       let tableName = tableNames.ORDERS_USERS;
       const role = roles.REGISTERED_ROLE;

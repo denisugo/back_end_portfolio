@@ -580,7 +580,8 @@ describe("Middlewares", () => {
     });
 
     describe("postOrderMiddleware", () => {
-      const user_id = 1; // With this user_id order tebale wiil be reset by another test
+      const user_id = 1; // With this user_id order table will be reset by another test
+      const transaction_id = 100;
       afterEach(async () => {
         const queryCommand = `DELETE FROM orders_users WHERE user_id = ${user_id}`;
         const role = roles.ADMIN_ROLE;
@@ -591,6 +592,7 @@ describe("Middlewares", () => {
         const req = {
           user: { id: user_id },
           body: {
+            transaction_id,
             cart: [
               {
                 user_id,
@@ -681,12 +683,13 @@ describe("Middlewares", () => {
       const order_id = 1;
       const user_id = 3;
       const quanttiy = 5;
+      const transaction_id = 10;
 
       afterEach(async () => {
         const role = roles.ADMIN_ROLE;
 
         let tableName = tableNames.ORDERS_USERS;
-        let queryCommand = `INSERT INTO ${tableName} (order_id, user_id) VALUES(${order_id}, ${user_id});`;
+        let queryCommand = `INSERT INTO ${tableName} (order_id, user_id, transaction_id) VALUES(${order_id}, ${user_id}, ${transaction_id});`;
 
         await executeQuery({ db, role, queryCommand }, simpleQuery);
 

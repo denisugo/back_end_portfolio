@@ -47,7 +47,7 @@
  *            type: string
  *            description: The value to be passed in
  * 
- *      DeleteByID:
+ *      Delete_by_id:
  *        type: object
  *        required:
  *          - id
@@ -188,7 +188,7 @@
  *      content:
  *        application/json:
  *          schema:
- *            $ref: '#/components/schemas/DeleteByID'
+ *            $ref: '#/components/schemas/Delete_by_id'
  *
  *    responses:
  *      204:

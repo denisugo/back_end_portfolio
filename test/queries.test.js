@@ -463,7 +463,7 @@ describe("Queries", () => {
             db,
             role: roles.ADMIN_ROLE,
             tableName: tableNames.PG_TEMP_ORDERS_USERS,
-            columns: "order_id, user_id, shipped",
+            columns: "order_id, user_id, shipped, transaction_id",
             path: "/Users/denis/projects/back-end-front-end/server/test/temp_table_data/orders_users.csv",
           },
           populateTable
@@ -601,7 +601,7 @@ describe("Queries", () => {
             db,
             role: roles.ADMIN_ROLE,
             tableName: tableNames.PG_TEMP_ORDERS_USERS,
-            columns: "order_id, user_id, shipped",
+            columns: "order_id, user_id, shipped, transaction_id",
             path: "/Users/denis/projects/back-end-front-end/server/test/temp_table_data/orders_users.csv",
           },
           populateTable
@@ -667,6 +667,7 @@ describe("Queries", () => {
         it("Should insert values", async () => {
           const ordersUsersObject = {
             user_id: 2,
+            transaction_id: 1000,
           };
 
           const { columns, queryPrepared, values } =
@@ -767,7 +768,7 @@ describe("Queries", () => {
           db,
           role: roles.ADMIN_ROLE,
           tableName: tableNames.PG_TEMP_ORDERS_USERS,
-          columns: "order_id, user_id, shipped",
+          columns: "order_id, user_id, shipped, transaction_id",
           path: "/Users/denis/projects/back-end-front-end/server/test/temp_table_data/orders_users.csv",
         },
         populateTable
