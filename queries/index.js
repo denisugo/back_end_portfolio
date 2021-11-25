@@ -3,6 +3,7 @@
  * @param {String} options.tableName The name of the table
  * @param {Number} options.id id column
  * @param {Number} options.order_id order_id column
+ * @param {Number} options.product_id order_id column
  * @param {Number} options.user_id user_id column
  * @param {Object} options.db Database object
  * @param {String} options.username username column
@@ -71,6 +72,29 @@ const updateValuesById = async ({
     " SET " +
     columnName +
     " = $1 WHERE id = $2 RETURNING *;";
+
+  try {
+    const { rows } = await db.query(query, params);
+    return rows[0];
+  } catch (error) {
+    console.error(error.message);
+  }
+  return undefined;
+};
+
+/*
+ * Could be used for updating orders table
+ */
+const updateValuesByIdAndProductId = async ({
+  db,
+  tableName,
+  id,
+  product_id,
+  newValue,
+  columnName,
+}) => {
+  const params = [newValue, id, product_id];
+  const query = `UPDATE ${tableName} SET ${columnName} = $1 WHERE id = $2 AND product_id = $3 RETURNING *;`;
 
   try {
     const { rows } = await db.query(query, params);
@@ -314,6 +338,7 @@ module.exports = {
   selectByCategory,
   selectWithUsernameAndPassword,
   updateValuesById,
+  updateValuesByIdAndProductId,
   deleteValuesById,
   deleteValuesByOrderId,
   executeQuery,

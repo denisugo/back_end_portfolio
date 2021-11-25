@@ -17,6 +17,7 @@ const {
   selectByIdMultiple,
   selectByUserId,
   selectOrdersByUserId,
+  updateValuesByIdAndProductId,
 } = require("../queries");
 
 const stringCreator = require("../queries/stringCreator");
@@ -533,13 +534,13 @@ describe("Queries", () => {
       });
 
       describe("selectOrdersByUserId", () => {
-        const tableName = tableNames.PG_TEMP_ORDERS;
+        // Interacts with real db
         const role = roles.REGISTERED_ROLE;
         it("Should select all order items by user_id", async () => {
           const user_id = 1;
 
           const selected = await executeQuery(
-            { db, role, tableName, user_id },
+            { db, role, user_id },
             selectOrdersByUserId
           );
 
@@ -551,7 +552,7 @@ describe("Queries", () => {
           const user_id = 1000;
 
           const selected = await executeQuery(
-            { db, role, tableName, user_id },
+            { db, role, user_id },
             selectOrdersByUserId
           );
 
@@ -589,97 +590,97 @@ describe("Queries", () => {
       });
     });
 
-    // describe("Orders_Users table", () => {
-    //   beforeEach("Create temporary table orders_users", async function () {
-    //     await executeQuery(
-    //       { db, role: roles.ADMIN_ROLE, tableName: tableNames.ORDERS_USERS },
-    //       createTempTable
-    //     );
-    //     await executeQuery(
-    //       {
-    //         db,
-    //         role: roles.ADMIN_ROLE,
-    //         tableName: tableNames.PG_TEMP_ORDERS_USERS,
-    //         columns: "order_id, user_id, shipped",
-    //         path: "/Users/denis/projects/back-end-front-end/server/test/temp_table_data/orders_users.csv",
-    //       },
-    //       populateTable
-    //     );
+    describe("Orders_Users table", () => {
+      beforeEach("Create temporary table orders_users", async function () {
+        await executeQuery(
+          { db, role: roles.ADMIN_ROLE, tableName: tableNames.ORDERS_USERS },
+          createTempTable
+        );
+        await executeQuery(
+          {
+            db,
+            role: roles.ADMIN_ROLE,
+            tableName: tableNames.PG_TEMP_ORDERS_USERS,
+            columns: "order_id, user_id, shipped",
+            path: "/Users/denis/projects/back-end-front-end/server/test/temp_table_data/orders_users.csv",
+          },
+          populateTable
+        );
 
-    //     // setup
+        // setup
 
-    //     await executeQuery(
-    //       {
-    //         db,
-    //         role: roles.ADMIN_ROLE,
-    //         queryCommand: `GRANT SELECT,INSERT ON ${tableNames.PG_TEMP_ORDERS_USERS} TO ${roles.REGISTERED_ROLE};`,
-    //       },
-    //       simpleQuery
-    //     );
-    //   });
+        await executeQuery(
+          {
+            db,
+            role: roles.ADMIN_ROLE,
+            queryCommand: `GRANT SELECT,INSERT ON ${tableNames.PG_TEMP_ORDERS_USERS} TO ${roles.REGISTERED_ROLE};`,
+          },
+          simpleQuery
+        );
+      });
 
-    //   afterEach("Drop temporary table orders_users", async function () {
-    //     await executeQuery(
-    //       {
-    //         db,
-    //         role: roles.ADMIN_ROLE,
-    //         tableName: tableNames.PG_TEMP_ORDERS_USERS,
-    //       },
-    //       dropTable
-    //     );
-    //   });
+      afterEach("Drop temporary table orders_users", async function () {
+        await executeQuery(
+          {
+            db,
+            role: roles.ADMIN_ROLE,
+            tableName: tableNames.PG_TEMP_ORDERS_USERS,
+          },
+          dropTable
+        );
+      });
 
-    //   describe("selectByUserId", () => {
-    //     it("Should select orders by user id", async () => {
-    //       const user_id = 1;
-    //       const tableName = tableNames.PG_TEMP_ORDERS_USERS;
-    //       const role = roles.REGISTERED_ROLE;
+      // describe("selectByUserId", () => {
+      //   it("Should select orders by user id", async () => {
+      //     const user_id = 1;
+      //     const tableName = tableNames.PG_TEMP_ORDERS_USERS;
+      //     const role = roles.REGISTERED_ROLE;
 
-    //       const selected = await executeQuery(
-    //         { db, role, tableName, user_id },
-    //         selectByUserId
-    //       );
+      //     const selected = await executeQuery(
+      //       { db, role, tableName, user_id },
+      //       selectByUserId
+      //     );
 
-    //       assert.isArray(selected);
-    //       assert.isObject(selected[0]);
-    //     });
+      //     assert.isArray(selected);
+      //     assert.isObject(selected[0]);
+      //   });
 
-    //     it("Should not select orders by user id when user_id doesnt exist", async () => {
-    //       const user_id = 1000;
-    //       const tableName = tableNames.PG_TEMP_ORDERS_USERS;
-    //       const role = roles.REGISTERED_ROLE;
+      //   it("Should not select orders by user id when user_id doesnt exist", async () => {
+      //     const user_id = 1000;
+      //     const tableName = tableNames.PG_TEMP_ORDERS_USERS;
+      //     const role = roles.REGISTERED_ROLE;
 
-    //       const selected = await executeQuery(
-    //         { db, role, tableName, user_id },
-    //         selectByUserId
-    //       );
+      //     const selected = await executeQuery(
+      //       { db, role, tableName, user_id },
+      //       selectByUserId
+      //     );
 
-    //       assert.isArray(selected);
-    //       assert.isUndefined(selected[0]);
-    //     });
-    //   });
+      //     assert.isArray(selected);
+      //     assert.isUndefined(selected[0]);
+      //   });
+      // });
 
-    //   describe("insertValues", () => {
-    //     const tableName = tableNames.PG_TEMP_ORDERS_USERS;
-    //     const role = roles.REGISTERED_ROLE;
+      describe("insertValues", () => {
+        const tableName = tableNames.PG_TEMP_ORDERS_USERS;
+        const role = roles.REGISTERED_ROLE;
 
-    //     it("Should insert values", async () => {
-    //       const ordersUsersObject = {
-    //         user_id: 2,
-    //       };
+        it("Should insert values", async () => {
+          const ordersUsersObject = {
+            user_id: 2,
+          };
 
-    //       const { columns, queryPrepared, values } =
-    //         stringCreator.orders_users(ordersUsersObject);
+          const { columns, queryPrepared, values } =
+            stringCreator.orders_users(ordersUsersObject);
 
-    //       const inserted = await executeQuery(
-    //         { db, tableName, role, columns, queryPrepared, values },
-    //         insertValues
-    //       );
+          const inserted = await executeQuery(
+            { db, tableName, role, columns, queryPrepared, values },
+            insertValues
+          );
 
-    //       assert.isObject(inserted);
-    //     });
-    //   });
-    // });
+          assert.isObject(inserted);
+        });
+      });
+    });
   });
 
   describe("Admin role", () => {
@@ -844,7 +845,7 @@ describe("Queries", () => {
     });
 
     describe("Orders table", () => {
-      describe("deleteValues", () => {
+      describe("deleteValuesById", () => {
         it("Should delete values filtered by id", async () => {
           const id = 1;
           const tableName = tableNames.PG_TEMP_ORDERS;
@@ -856,6 +857,32 @@ describe("Queries", () => {
           );
 
           assert.strictEqual(output.success, true);
+        });
+      });
+
+      describe("updateValuesByIdAndProductId", () => {
+        it("Should update quantity filtered by id and product_id", async () => {
+          const columnName = "quantity";
+          const newValue = "10";
+          const id = 5;
+          const product_id = 16;
+          const tableName = tableNames.PG_TEMP_ORDERS;
+          const role = roles.ADMIN_ROLE;
+
+          const output = await executeQuery(
+            {
+              db,
+              tableName,
+              role,
+              columnName,
+              newValue,
+              id,
+              product_id,
+            },
+            updateValuesByIdAndProductId
+          );
+
+          assert.isObject(output);
         });
       });
     });

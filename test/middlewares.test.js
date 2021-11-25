@@ -21,7 +21,13 @@ const {
   putProductMiddleware,
   deleteProductMiddleware,
 } = require("../middlewares/productMiddlewares");
-const { getOrderByIdMiddleware } = require("../middlewares/orderMiddlewares");
+const {
+  getOrderByIdMiddleware,
+  getOrdersByUserMiddleware,
+  postOrderMiddleware,
+  putOrderMiddleware,
+  deleteOrderMiddleware,
+} = require("../middlewares/orderMiddlewares");
 
 describe("Middlewares", () => {
   // mocking functions
@@ -47,68 +53,69 @@ describe("Middlewares", () => {
     nextUsed = false;
     sendUsed = false;
   });
+  describe("loginMiddlewares", () => {
+    describe("loginVerification", () => {
+      it("Should call next if user is already logged in", () => {
+        // req.user should be an object
+        const req = { user: {} };
 
-  describe("loginVerification", () => {
-    it("Should call next if user is already logged in", () => {
-      // req.user should be an object
-      const req = { user: {} };
+        loginVerification(req, res, next);
 
-      loginVerification(req, res, next);
+        assert.strictEqual(nextUsed, true);
+      });
 
-      assert.strictEqual(nextUsed, true);
+      it("Should send 401 status code and 'Unauthorized' if user is not logged in", () => {
+        const req = {};
+
+        loginVerification(req, res, next);
+
+        assert.strictEqual(nextUsed, false);
+        assert.strictEqual(sendUsed, "401 Unauthorized");
+      });
     });
+    describe("userIdVerification", () => {
+      it("Should call next if user id from request and user id from cookie are the same", () => {
+        // req.user should be an object
+        const req = { user: { id: 1 }, params: { id: "1" } };
 
-    it("Should send 401 status code and 'Unauthorized' if user is not logged in", () => {
-      const req = {};
+        userIdVerification(req, res, next);
 
-      loginVerification(req, res, next);
+        assert.strictEqual(nextUsed, true);
+        assert.strictEqual(sendUsed, false);
+      });
 
-      assert.strictEqual(nextUsed, false);
-      assert.strictEqual(sendUsed, "401 Unauthorized");
+      it("Should send 401 status code and 'Unauthorized' if user id from request and user id from cookie are not the samen", () => {
+        const req = { user: { id: 1 }, params: { id: "2" } };
+
+        userIdVerification(req, res, next);
+
+        assert.strictEqual(nextUsed, false);
+        assert.strictEqual(sendUsed, "401 Unauthorized");
+      });
+    });
+    describe("isAdminVerification", () => {
+      it("Should call next if user is_admin is true", () => {
+        // req.user should be an object
+        const req = { user: { is_admin: true } };
+
+        isAdminVerification(req, res, next);
+
+        assert.strictEqual(nextUsed, true);
+        assert.strictEqual(sendUsed, false);
+      });
+
+      it("Should send 401 status code and 'Unauthorized' if is_admin is false", () => {
+        const req = { user: { is_admin: false } };
+
+        isAdminVerification(req, res, next);
+
+        assert.strictEqual(nextUsed, false);
+        assert.strictEqual(sendUsed, "401 Unauthorized");
+      });
     });
   });
-  describe("userIdVerification", () => {
-    it("Should call next if user id from request and user id from cookie are the same", () => {
-      // req.user should be an object
-      const req = { user: { id: 1 }, params: { id: "1" } };
 
-      userIdVerification(req, res, next);
-
-      assert.strictEqual(nextUsed, true);
-      assert.strictEqual(sendUsed, false);
-    });
-
-    it("Should send 401 status code and 'Unauthorized' if user id from request and user id from cookie are not the samen", () => {
-      const req = { user: { id: 1 }, params: { id: "2" } };
-
-      userIdVerification(req, res, next);
-
-      assert.strictEqual(nextUsed, false);
-      assert.strictEqual(sendUsed, "401 Unauthorized");
-    });
-  });
-  describe("isAdminVerification", () => {
-    it("Should call next if user is_admin is true", () => {
-      // req.user should be an object
-      const req = { user: { is_admin: true } };
-
-      isAdminVerification(req, res, next);
-
-      assert.strictEqual(nextUsed, true);
-      assert.strictEqual(sendUsed, false);
-    });
-
-    it("Should send 401 status code and 'Unauthorized' if is_admin is false", () => {
-      const req = { user: { is_admin: false } };
-
-      isAdminVerification(req, res, next);
-
-      assert.strictEqual(nextUsed, false);
-      assert.strictEqual(sendUsed, "401 Unauthorized");
-    });
-  });
-
-  describe("registerMiddleware", () => {
+  describe("registerMiddlewares", () => {
     const username = "ronnie123_456_222";
     const password = "new-secret-pass";
     const email = "ronnie_adams@yandex.ru";
@@ -546,9 +553,180 @@ describe("Middlewares", () => {
         assert.strictEqual(nextUsed, false);
       });
     });
-    describe("getOrdersByUserMiddleware", () => {});
-    describe("postOrderMiddleware", () => {});
-    describe("putOrderMiddleware", () => {});
-    describe("deleteOrderMiddleware", () => {});
+
+    describe("getOrdersByUserMiddleware", () => {
+      it("Should send back an array", async () => {
+        const req = {
+          user: { id: 3 }, // id=3 in real db for testing purposes
+        };
+
+        await getOrdersByUserMiddleware(req, res, next);
+
+        assert.isArray(sendUsed);
+        assert.isObject(sendUsed[0]);
+        assert.strictEqual(nextUsed, false);
+      });
+      it("Should send back an empty array when id is incorrect", async () => {
+        const req = {
+          user: { id: 1000 },
+        };
+
+        await getOrdersByUserMiddleware(req, res, next);
+
+        assert.isArray(sendUsed);
+        assert.isUndefined(sendUsed[0]);
+        assert.strictEqual(nextUsed, false);
+      });
+    });
+
+    describe("postOrderMiddleware", () => {
+      const user_id = 1; // With this user_id order tebale wiil be reset by another test
+      afterEach(async () => {
+        const queryCommand = `DELETE FROM orders_users WHERE user_id = ${user_id}`;
+        const role = roles.ADMIN_ROLE;
+        await executeQuery({ db, role, queryCommand }, simpleQuery);
+      });
+
+      it("Should post a new order item", async () => {
+        const req = {
+          user: { id: user_id },
+          body: {
+            cart: [
+              {
+                user_id,
+                product_id: 3,
+                quantity: 5,
+              },
+            ],
+          },
+        };
+
+        await postOrderMiddleware(req, res, next);
+
+        assert.strictEqual(sendUsed, "201 Your order has been placed");
+        assert.strictEqual(nextUsed, false);
+      });
+      it("Should not post if the cart hasnt any item", async () => {
+        const req = {
+          user: { id: user_id },
+        };
+
+        await postOrderMiddleware(req, res, next);
+
+        assert.strictEqual(sendUsed, "400 Check your cart");
+        assert.strictEqual(nextUsed, false);
+      });
+    });
+
+    describe("putOrderMiddleware", () => {
+      const id = 1;
+      const product_id = 3;
+
+      afterEach(async () => {
+        const tableName = tableNames.ORDERS;
+        const role = roles.ADMIN_ROLE;
+
+        const quanttiy = 5;
+
+        const queryCommand = `UPDATE ${tableName} SET quantity = ${quanttiy} WHERE id = ${id} AND product_id = ${product_id};`;
+
+        await executeQuery({ db, role, queryCommand }, simpleQuery);
+      });
+
+      it("Should update a quantity", async () => {
+        const newQuantity = 10;
+        const req = {
+          body: { field: "quantity", value: newQuantity, id, product_id },
+        };
+
+        await putOrderMiddleware(req, res, next);
+
+        assert.strictEqual(nextUsed, false);
+        assert.strictEqual(sendUsed, "Updated");
+      });
+
+      it("Should return '400 Cannot be updated' when no id provided", async () => {
+        const newQuantity = 10;
+        const req = {
+          body: {
+            field: "quantity",
+            value: newQuantity,
+            id: undefined,
+            product_id,
+          },
+        };
+
+        await putOrderMiddleware(req, res, next);
+
+        assert.strictEqual(nextUsed, false);
+        assert.strictEqual(sendUsed, "400 Cannot be updated");
+      });
+
+      it("Should return '400 Cannot be updated' when no quantity provided", async () => {
+        const newQuantity = undefined;
+        const req = {
+          body: { field: "quantity", value: newQuantity, id, product_id },
+        };
+
+        await putOrderMiddleware(req, res, next);
+
+        assert.strictEqual(nextUsed, false);
+        assert.strictEqual(sendUsed, "400 Cannot be updated");
+      });
+    });
+
+    describe("deleteOrderMiddleware", () => {
+      const id = 1;
+      const product_id = 3;
+      const order_id = 1;
+      const user_id = 3;
+      const quanttiy = 5;
+
+      afterEach(async () => {
+        const role = roles.ADMIN_ROLE;
+
+        let tableName = tableNames.ORDERS_USERS;
+        let queryCommand = `INSERT INTO ${tableName} (order_id, user_id) VALUES(${order_id}, ${user_id});`;
+
+        await executeQuery({ db, role, queryCommand }, simpleQuery);
+
+        tableName = tableNames.ORDERS;
+        queryCommand = `INSERT INTO ${tableName}(id, product_id, quantity) VALUES(${id}, ${product_id}, ${quanttiy}) ;`;
+
+        await executeQuery({ db, role, queryCommand }, simpleQuery);
+      });
+
+      it("Should dalete an order", async () => {
+        const req = {
+          body: { order_id },
+          params: { id },
+        };
+
+        await deleteOrderMiddleware(req, res, next);
+
+        assert.strictEqual(nextUsed, false);
+        assert.strictEqual(sendUsed, "204 Successfully deleted");
+
+        const order = await getOrderByIdMiddleware(req, res, next);
+
+        assert.isUndefined(order[0]);
+      });
+
+      it("Should return '400 The operation cannot be done' if order_id is not provided", async () => {
+        const req = {
+          body: { order_id: undefined },
+          params: { id },
+        };
+
+        await deleteOrderMiddleware(req, res, next);
+
+        assert.strictEqual(nextUsed, false);
+        assert.strictEqual(sendUsed, "400 The operation cannot be done");
+
+        const order = await getOrderByIdMiddleware(req, res, next);
+
+        assert.isObject(order[0]);
+      });
+    });
   });
 });

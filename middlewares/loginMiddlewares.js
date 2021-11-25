@@ -1,3 +1,5 @@
+const { executeQuery } = require("../queries");
+
 /**
  * This function wiil check if user is already logged in
  */
