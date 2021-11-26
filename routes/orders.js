@@ -67,7 +67,7 @@
  * @swagger
  * users/{id}/orders:
  *  get:
- *    summary: Sends back an arry of orders
+ *    summary: Sends back an array of orders
  *    tags: [Orders]
  *    parameters:
  *      - in: path
@@ -89,33 +89,7 @@
  * @swagger
  * users/{id}/orders:
  *  post:
- *    summary: Sends back an arry of orders
- *    tags: [Orders]
- *    requestBody:
- *      required: true
- *      content:
- *        application/json:
- *          schema:
- *            $ref: '#/components/schemas/Cart'
- *    parameters:
- *      - in: path
- *        name: id
- *        required: true
- *        schema:
- *          type: integer
- *
- *    responses:
- *      201:
- *        description: Your order has been placed
- *      400:
- *        description: Check your cart
- */
-
-/**
- * @swagger
- * users/{id}/orders:
- *  post:
- *    summary: Sends back an array of orders
+ *    summary: Adds a new order
  *    tags: [Orders]
  *    requestBody:
  *      required: true
@@ -188,3 +162,57 @@
  *      400:
  *        description: The operation cannot be done
  */
+
+const express = require("express");
+
+const {
+  loginVerification,
+  userIdVerification,
+  isAdminVerification,
+} = require("../middlewares/loginMiddlewares");
+
+const {
+  getOrdersByUserMiddleware,
+  putOrderMiddleware,
+  deleteOrderMiddleware,
+  postOrderMiddleware,
+} = require("../middlewares/orderMiddlewares");
+
+const router = express.Router({ mergeParams: true });
+
+/* GET orders. */
+router.get(
+  "/",
+  loginVerification,
+  userIdVerification,
+  getOrdersByUserMiddleware
+);
+
+/* PUT orders. */
+router.put(
+  "/",
+  loginVerification,
+  userIdVerification,
+  isAdminVerification,
+  putOrderMiddleware
+);
+
+/* POST orders. */
+router.post(
+  "/",
+  loginVerification,
+  userIdVerification,
+  isAdminVerification,
+  postOrderMiddleware
+);
+
+/* DELETE orders. */
+router.delete(
+  "/",
+  loginVerification,
+  userIdVerification,
+  isAdminVerification,
+  deleteOrderMiddleware
+);
+
+module.exports = router;

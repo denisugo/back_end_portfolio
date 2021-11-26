@@ -48,6 +48,13 @@ const {
   getUserMiddleware,
 } = require("../middlewares/userMiddlewares");
 
+const ordersRouter = require("./orders");
+const cartRouter = require("./cart");
+// orders endpoint
+router.use("/:id/orders", ordersRouter);
+// cart endpoint
+router.use("/:id/cart", cartRouter);
+
 /* GET user profile. */
 router.get("/:id", loginVerification, userIdVerification, getUserMiddleware);
 

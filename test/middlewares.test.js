@@ -732,4 +732,6 @@ describe("Middlewares", () => {
       });
     });
   });
+
+  //TODO: Add test that checks whether deleted user was also deleted from another tables
 });

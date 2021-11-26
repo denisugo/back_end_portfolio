@@ -39,6 +39,13 @@ const stringCreator = {
       queryPrepared: "$1, $2",
     };
   },
+  cart: (cartObject) => {
+    return {
+      columns: "user_id, product_id, quantity",
+      values: [cartObject.user_id, cartObject.product_id, cartObject.quantity],
+      queryPrepared: "$1, $2, $3",
+    };
+  },
 };
 
 module.exports = stringCreator;

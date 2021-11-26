@@ -105,6 +105,26 @@ const updateValuesByIdAndProductId = async ({
   return undefined;
 };
 
+const updateValuesByUserIdAndProductId = async ({
+  db,
+  tableName,
+  user_id,
+  product_id,
+  newValue,
+  columnName,
+}) => {
+  const params = [newValue, user_id, product_id];
+  const query = `UPDATE ${tableName} SET ${columnName} = $1 WHERE user_id = $2 AND product_id = $3 RETURNING *;`;
+
+  try {
+    const { rows } = await db.query(query, params);
+    return rows[0];
+  } catch (error) {
+    console.error(error.message);
+  }
+  return undefined;
+};
+
 /*
  * Could be used for deleting rows
  */
@@ -120,9 +140,33 @@ const deleteValuesById = async ({ db, tableName, id }) => {
   return undefined;
 };
 
+/*
+ * Could be used for deleting rows in orders table
+ */
 const deleteValuesByOrderId = async ({ db, tableName, order_id }) => {
   const params = [order_id];
   const query = "DELETE FROM " + tableName + " WHERE order_id = $1;";
+  try {
+    await db.query(query, params);
+    return { success: true };
+  } catch (error) {
+    console.error(error);
+  }
+  return undefined;
+};
+
+/*
+ * Could be used for deleting rows in carts table
+ */
+const deleteValuesByUserIdAndProductId = async ({
+  db,
+  tableName,
+  user_id,
+  product_id,
+}) => {
+  const params = [user_id, product_id];
+  const query =
+    "DELETE FROM " + tableName + " WHERE user_id = $1 AND product_id = $2;";
   try {
     await db.query(query, params);
     return { success: true };
@@ -340,8 +384,10 @@ module.exports = {
   selectWithUsernameAndPassword,
   updateValuesById,
   updateValuesByIdAndProductId,
+  updateValuesByUserIdAndProductId,
   deleteValuesById,
   deleteValuesByOrderId,
+  deleteValuesByUserIdAndProductId,
   executeQuery,
   createTempTable,
   dropTable,

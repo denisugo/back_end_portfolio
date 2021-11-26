@@ -18,6 +18,8 @@ const {
   selectByUserId,
   selectOrdersByUserId,
   updateValuesByIdAndProductId,
+  updateValuesByUserIdAndProductId,
+  deleteValuesByUserIdAndProductId,
 } = require("../queries");
 
 const stringCreator = require("../queries/stringCreator");
@@ -414,8 +416,156 @@ describe("Queries", () => {
       });
     });
 
-    // describe("Carts table", ()=>{
-    // })
+    describe("Carts table", () => {
+      beforeEach("Create temporary table cart", async function () {
+        await executeQuery(
+          { db, role: roles.ADMIN_ROLE, tableName: tableNames.CARTS },
+          createTempTable
+        );
+        await executeQuery(
+          {
+            db,
+            role: roles.ADMIN_ROLE,
+            tableName: tableNames.PG_TEMP_CARTS,
+            columns: "user_id, product_id, quantity",
+            path: "/Users/denis/projects/back-end-front-end/server/test/temp_table_data/carts.csv",
+          },
+          populateTable
+        );
+
+        // setup
+
+        await executeQuery(
+          {
+            db,
+            role: roles.ADMIN_ROLE,
+            queryCommand: `GRANT SELECT, INSERT, UPDATE, DELETE ON ${tableNames.PG_TEMP_CARTS} TO ${roles.REGISTERED_ROLE};`,
+          },
+          simpleQuery
+        );
+      });
+
+      afterEach("Drop temporary table orders", async function () {
+        await executeQuery(
+          { db, role: roles.ADMIN_ROLE, tableName: tableNames.PG_TEMP_CARTS },
+          dropTable
+        );
+      });
+
+      const tableName = tableNames.PG_TEMP_CARTS;
+      const role = roles.REGISTERED_ROLE;
+      describe("selectByUserId", () => {
+        it("Should select all cart items by user_id", async () => {
+          const user_id = 8;
+
+          const selected = await executeQuery(
+            { db, tableName, role, user_id },
+            selectByUserId
+          );
+
+          assert.isArray(selected);
+          assert.isObject(selected[0]);
+        });
+      });
+
+      describe("insertValues", () => {
+        it("Should insert a new item", async () => {
+          const user_id = 1;
+          const product_id = 1;
+          const quantity = 3;
+          const cartObject = { user_id, product_id, quantity };
+
+          const { columns, values, queryPrepared } =
+            stringCreator.cart(cartObject);
+
+          const inserted = await executeQuery(
+            { db, tableName, role, columns, values, queryPrepared },
+            insertValues
+          );
+
+          assert.isObject(inserted);
+        });
+
+        it("Should not insert a new item when PK is violated", async () => {
+          const user_id = 7;
+          const product_id = 6;
+          const quantity = 3;
+          const cartObject = { user_id, product_id, quantity };
+
+          const { columns, values, queryPrepared } =
+            stringCreator.cart(cartObject);
+
+          const inserted = await executeQuery(
+            { db, tableName, role, columns, values, queryPrepared },
+            insertValues
+          );
+
+          assert.isUndefined(inserted);
+        });
+      });
+
+      describe("updateValuesByUserIdAndProductId", () => {
+        it("Should insert a new item", async () => {
+          const user_id = 8;
+          const product_id = 16;
+          const newValue = 3;
+          const columnName = "quantity";
+
+          const updated = await executeQuery(
+            {
+              db,
+              tableName,
+              role,
+              columnName,
+              newValue,
+              user_id,
+              product_id,
+            },
+            updateValuesByUserIdAndProductId
+          );
+          assert.isObject(updated);
+        });
+        it("Should not update when user does not exist", async () => {
+          const user_id = 115;
+          const product_id = 16;
+          const newValue = 3;
+          const columnName = "quantity";
+
+          const updated = await executeQuery(
+            {
+              db,
+              tableName,
+              role,
+              columnName,
+              newValue,
+              user_id,
+              product_id,
+            },
+            updateValuesByUserIdAndProductId
+          );
+          assert.isUndefined(updated);
+        });
+      });
+
+      describe("deleteValuesByUserIdAndProductId", () => {
+        it("Should delete an item", async () => {
+          const user_id = 8;
+          const product_id = 16;
+
+          const deleted = await executeQuery(
+            {
+              db,
+              tableName,
+              role,
+              user_id,
+              product_id,
+            },
+            deleteValuesByUserIdAndProductId
+          );
+          assert.isObject(deleted);
+        });
+      });
+    });
 
     describe("Orders table", () => {
       beforeEach("Create temporary table orders", async function () {
@@ -785,7 +935,7 @@ describe("Queries", () => {
         dropTable
       );
     });
-    //TODO: Add test that checks whether deleted user was also deleted from another tables
+
     describe("Users table", () => {
       describe("deleteValues", () => {
         it("Should delete values filtered by id", async () => {

@@ -26,3 +26,46 @@
  *  name: Checkout
  *  description: Api to your checkout
  */
+
+/**
+ * @swagger
+ * users/{id}/cart/checkout:
+ *  post:
+ *    summary: Checkout the provided cart
+ *    tags: [Checkout]
+ *    requestBody:
+ *      required: true
+ *      content:
+ *        application/json:
+ *          schema:
+ *            $ref: '#/components/schemas/Cart_items'
+ *    parameters:
+ *      - in: path
+ *        name: id
+ *        required: true
+ *        schema:
+ *          type: integer
+ *
+ *    responses:
+ *      307:
+ *        description: Redirecting to post order
+ *      400:
+ *        description: Check your cart
+ */
+
+const express = require("express");
+const {
+  postCheckoutMiddleware,
+} = require("../middlewares/checkoutMiddlewares");
+
+const {
+  loginVerification,
+  userIdVerification,
+} = require("../middlewares/loginMiddlewares");
+
+const router = express.Router({ mergeParams: true });
+
+// POST checkout
+router.post("/", loginVerification, userIdVerification, postCheckoutMiddleware);
+
+module.exports = router;

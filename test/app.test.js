@@ -205,7 +205,15 @@ describe("App", () => {
 
     it("Should send 401 when user is not admin", (done) => {
       const server = request.agent("http://localhost:3000");
-      server.post("/api/v1/products").send(body).expect(401, done);
+      const username = "davy000";
+      const password = "treasure";
+      server
+        .post("/api/v1/login")
+        .send({ username, password })
+        .expect(200)
+        .then(() => {
+          server.post("/api/v1/products/").send(body).expect(401, done);
+        });
     });
   });
   describe("PUT/products/", () => {
@@ -243,8 +251,16 @@ describe("App", () => {
         });
     });
     it("Should send 401 when user is not admin", (done) => {
+      const username = "davy000";
+      const password = "treasure";
       const server = request.agent("http://localhost:3000");
-      server.put("/api/v1/products/1").send(body).expect(401, done);
+      server
+        .post("/api/v1/login")
+        .send({ username, password })
+        .expect(200)
+        .then(() => {
+          server.put("/api/v1/products/1").send(body).expect(401, done);
+        });
     });
   });
   describe("DELETE/products/", () => {
@@ -278,8 +294,242 @@ describe("App", () => {
         });
     });
     it("Should send 401 when user is not admin", (done) => {
+      const username = "davy000";
+      const password = "treasure";
       const server = request.agent("http://localhost:3000");
-      server.delete("/api/v1/products/1").expect(401, done);
+      server
+        .post("/api/v1/login")
+        .send({ username, password })
+        .expect(200)
+        .then(() => {
+          server.delete("/api/v1/products/1").expect(401, done);
+        });
+    });
+  });
+
+  describe("GET/orders", () => {
+    const id = 3;
+    const username = "jTest";
+    const password = "anotherSecret";
+
+    it("Should receive orders ", (done) => {
+      const server = request.agent("http://localhost:3000");
+      server
+        .post("/api/v1/login")
+        .send({ username, password })
+        .expect(200)
+        .then(() => {
+          server.get(`/api/v1/users/${id}/orders`).expect(200, done);
+        });
+    });
+
+    it("Should get nothing when unathorized orders ", (done) => {
+      const server = request.agent("http://localhost:3000");
+      server.get(`/api/v1/users/${id}/orders`).expect(401, done);
+    });
+  });
+  describe("POST/orders", () => {
+    const user_id = 1; // With this user_id order table will be reset by another test
+    const transaction_id = 100;
+    const body = {
+      transaction_id,
+      cart: [
+        {
+          user_id,
+          product_id: 3,
+          quantity: 5,
+        },
+      ],
+    };
+
+    afterEach(async () => {
+      const queryCommand = `DELETE FROM orders_users WHERE user_id = ${user_id}`;
+      const role = roles.ADMIN_ROLE;
+      await executeQuery({ db, role, queryCommand }, simpleQuery);
+    });
+
+    it("Should add a new order to the order list", (done) => {
+      const server = request.agent("http://localhost:3000");
+      const username = "jb";
+      const password = "secret";
+      server
+        .post("/api/v1/login")
+        .send({ username, password })
+        .expect(200)
+        .then(() => {
+          server
+            .post(`/api/v1/users/${user_id}/orders`)
+            .send(body)
+            .expect(201, done);
+        });
+    });
+
+    it("Should send 401 when user is not admin", (done) => {
+      const server = request.agent("http://localhost:3000");
+      const username = "davy000";
+      const password = "treasure";
+      server
+        .post("/api/v1/login")
+        .send({ username, password })
+        .expect(200)
+        .then(() => {
+          server
+            .post(`/api/v1/users/${user_id}/orders`)
+            .send(body)
+            .expect(401, done);
+        });
+    });
+  });
+  describe("PUT/orders/", () => {
+    const id = 1;
+    const user_id = 3;
+    const product_id = 3;
+    const quanttiy = 5;
+    const newQuantity = 10;
+    const body = { field: "quantity", value: newQuantity, id, product_id };
+
+    afterEach(async () => {
+      const tableName = tableNames.ORDERS;
+      const role = roles.ADMIN_ROLE;
+
+      const queryCommand = `UPDATE ${tableName} SET quantity = ${quanttiy} WHERE id = ${id} AND product_id = ${product_id};`;
+
+      await executeQuery({ db, role, queryCommand }, simpleQuery);
+    });
+
+    it("Should edit an order in the order list", (done) => {
+      const server = request.agent("http://localhost:3000");
+      const username = "jTest";
+      const password = "anotherSecret";
+      server
+        .post("/api/v1/login")
+        .send({ username, password })
+        .expect(200)
+        .then(() => {
+          server
+            .put(`/api/v1/users/${user_id}/orders`)
+            .send(body)
+            .expect(200, done);
+        });
+    });
+    it("Should send 401 when user is not admin", (done) => {
+      const server = request.agent("http://localhost:3000");
+      const username = "davy000";
+      const password = "treasure";
+      server
+        .post("/api/v1/login")
+        .send({ username, password })
+        .expect(200)
+        .then(() => {
+          server
+            .put(`/api/v1/users/${user_id}/orders`)
+            .send(body)
+            .expect(401, done);
+        });
+    });
+    it("Should send 401 when user is not registered", (done) => {
+      const server = request.agent("http://localhost:3000");
+      server
+        .put(`/api/v1/users/${user_id}/orders`)
+        .send(body)
+        .expect(401, done);
+    });
+  });
+  describe("DELETE/orders/", () => {
+    const id = 1;
+    const product_id = 3;
+    const order_id = 1;
+    const user_id = 3;
+    const quanttiy = 5;
+    const transaction_id = 10;
+
+    const body = { order_id };
+
+    afterEach(async () => {
+      const role = roles.ADMIN_ROLE;
+
+      let tableName = tableNames.ORDERS_USERS;
+      let queryCommand = `INSERT INTO ${tableName} (order_id, user_id, transaction_id) VALUES(${order_id}, ${user_id}, ${transaction_id});`;
+
+      await executeQuery({ db, role, queryCommand }, simpleQuery);
+
+      tableName = tableNames.ORDERS;
+      queryCommand = `INSERT INTO ${tableName}(id, product_id, quantity) VALUES(${id}, ${product_id}, ${quanttiy}) ;`;
+
+      await executeQuery({ db, role, queryCommand }, simpleQuery);
+    });
+
+    it("Should delete an order from the product list", (done) => {
+      const server = request.agent("http://localhost:3000");
+      const username = "jTest";
+      const password = "anotherSecret";
+      server
+        .post("/api/v1/login")
+        .send({ username, password })
+        .expect(200)
+        .then(() => {
+          server
+            .delete(`/api/v1/users/${user_id}/orders`)
+            .send(body)
+            .expect(204, done);
+        });
+    });
+    it("Should send 401 when user is not admin", (done) => {
+      const server = request.agent("http://localhost:3000");
+      const username = "davy000";
+      const password = "treasure";
+      server
+        .post("/api/v1/login")
+        .send({ username, password })
+        .expect(200)
+        .then(() => {
+          server.delete(`/api/v1/users/${user_id}/orders`).expect(401, done);
+        });
+    });
+  });
+
+  describe("POST/checkout", () => {
+    const user_id = 1; // With this user_id order table will be reset by another test
+    const body = {
+      cart: [
+        {
+          user_id,
+          product_id: 3,
+          quantity: 5,
+        },
+      ],
+    };
+
+    afterEach(async () => {
+      const queryCommand = `DELETE FROM orders_users WHERE user_id = ${user_id}`;
+      const role = roles.ADMIN_ROLE;
+      await executeQuery({ db, role, queryCommand }, simpleQuery);
+    });
+
+    it("Should post a new order", (done) => {
+      const server = request.agent("http://localhost:3000");
+      const username = "jb";
+      const password = "secret";
+      server
+        .post("/api/v1/login")
+        .send({ username, password })
+        .expect(200)
+        .then(() => {
+          server
+            .post(`/api/v1/users/${user_id}/cart/checkout`)
+            .send(body)
+            .expect(307)
+            .expect("location", `/api/v1/users/${user_id}/orders`)
+            .end(done);
+        });
+    });
+
+    it("Should send 401 when user is not registered", (done) => {
+      const server = request.agent("http://localhost:3000");
+      server
+        .post(`/api/v1/users/${user_id}/cart/checkout`)
+        .send(body)
+        .expect(401, done);
     });
   });
 });
