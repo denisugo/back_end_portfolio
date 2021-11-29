@@ -1,5 +1,16 @@
 const { assert } = require("chai");
-const { simpleQuery, executeQuery, selectByUsername } = require("../queries");
+const {
+  simpleQuery,
+  executeQuery,
+  selectByUsername,
+  insertValues,
+  selectWithUsernameAndPassword,
+  deleteValuesById,
+  selectByUserId,
+  deleteValuesByOrderId,
+  selectById,
+  selectOrdersByUserId,
+} = require("../queries");
 const db = require("../db");
 const { tableNames, roles } = require("../config").constants;
 
@@ -28,6 +39,13 @@ const {
   putOrderMiddleware,
   deleteOrderMiddleware,
 } = require("../middlewares/orderMiddlewares");
+const stringCreator = require("../queries/stringCreator");
+const {
+  getCartByUserMiddleware,
+  postCartMiddleware,
+  putCartMiddleware,
+  deleteCartMiddleware,
+} = require("../middlewares/cartMiddlewares");
 
 describe("Middlewares", () => {
   // mocking functions
@@ -733,5 +751,437 @@ describe("Middlewares", () => {
     });
   });
 
-  //TODO: Add test that checks whether deleted user was also deleted from another tables
+  describe("cartMiddleware", () => {
+    describe("getCartByUserMiddleware", () => {
+      it("Should send back an array", async () => {
+        const req = {
+          user: { id: 3 },
+        };
+
+        await getCartByUserMiddleware(req, res, next);
+
+        assert.isArray(sendUsed);
+        assert.isObject(sendUsed[0]);
+        assert.strictEqual(nextUsed, false);
+      });
+      it("Should send back an empty array when id is incorrect", async () => {
+        const req = {
+          user: { id: 90 },
+        };
+
+        await getCartByUserMiddleware(req, res, next);
+
+        assert.isArray(sendUsed);
+        assert.isUndefined(sendUsed[0]);
+        assert.strictEqual(nextUsed, false);
+      });
+    });
+
+    describe("postCartMiddleware", () => {
+      const user_id = 1; // With this user_id order table will be reset by another test
+
+      afterEach(async () => {
+        const role = roles.ADMIN_ROLE;
+        const tableName = tableNames.CARTS;
+        const queryCommand = `DELETE FROM ${tableName} WHERE user_id = ${user_id};`;
+        await executeQuery({ db, role, queryCommand }, simpleQuery);
+      });
+
+      it("Should post a new cart item", async () => {
+        const req = {
+          user: { id: user_id },
+          body: {
+            product_id: 3,
+            quantity: 5,
+          },
+        };
+
+        await postCartMiddleware(req, res, next);
+
+        assert.strictEqual(sendUsed, "201 Added to the cart");
+        assert.strictEqual(nextUsed, false);
+      });
+      it("Should not post if the body hasnt some item", async () => {
+        const req = {
+          user: { id: user_id },
+          body: {
+            product_id: 3,
+            quantity: undefined,
+          },
+        };
+
+        await postCartMiddleware(req, res, next);
+
+        assert.strictEqual(sendUsed, "400 Check your cart");
+        assert.strictEqual(nextUsed, false);
+      });
+
+      it("Should not post if the body violates constrains", async () => {
+        const req = {
+          user: { id: user_id },
+          body: {
+            product_id: 30, //this product doesn exist
+            quantity: 1,
+          },
+        };
+
+        await postCartMiddleware(req, res, next);
+
+        assert.strictEqual(sendUsed, "400 Check your cart");
+        assert.strictEqual(nextUsed, false);
+      });
+    });
+
+    describe("putCartMiddleware", () => {
+      const user_id = 3;
+      const product_id = 3;
+
+      afterEach(async () => {
+        const tableName = tableNames.CARTS;
+        const role = roles.ADMIN_ROLE;
+
+        const quanttiy = 5;
+
+        const queryCommand = `UPDATE ${tableName} SET quantity = ${quanttiy} WHERE user_id = ${user_id} AND product_id = ${product_id};`;
+
+        await executeQuery({ db, role, queryCommand }, simpleQuery);
+      });
+
+      it("Should update a quantity", async () => {
+        const newQuantity = 10;
+        const req = {
+          user: { id: user_id },
+          body: { field: "quantity", value: newQuantity, product_id },
+        };
+
+        await putCartMiddleware(req, res, next);
+
+        assert.strictEqual(nextUsed, false);
+        assert.strictEqual(sendUsed, "Updated");
+      });
+
+      it("Should return '400 Cannot be updated' when no quantity provided", async () => {
+        const newQuantity = undefined;
+        const req = {
+          user: { id: user_id },
+          body: { field: "quantity", value: newQuantity, product_id },
+        };
+
+        await putCartMiddleware(req, res, next);
+
+        assert.strictEqual(nextUsed, false);
+        assert.strictEqual(sendUsed, "400 Cannot be updated");
+      });
+    });
+
+    describe("deleteCartMiddleware", () => {
+      const product_id = 3;
+      const user_id = 3;
+      const quanttiy = 5;
+
+      afterEach(async () => {
+        const role = roles.ADMIN_ROLE;
+        const tableName = tableNames.CARTS;
+        const queryCommand = `INSERT INTO ${tableName}(user_id, product_id, quantity) VALUES(${user_id}, ${product_id}, ${quanttiy}) ;`;
+
+        await executeQuery({ db, role, queryCommand }, simpleQuery);
+      });
+
+      it("Should dalete a cart item", async () => {
+        const req = {
+          body: { product_id },
+          user: { id: user_id },
+        };
+
+        await deleteCartMiddleware(req, res, next);
+
+        assert.strictEqual(nextUsed, false);
+        assert.strictEqual(sendUsed, "204 Successfully deleted");
+      });
+
+      it("Should return '400 The operation cannot be done' if product_id is not provided", async () => {
+        const req = {
+          body: { product_id: undefined },
+          user: { id: user_id },
+        };
+
+        await deleteCartMiddleware(req, res, next);
+
+        assert.strictEqual(nextUsed, false);
+        assert.strictEqual(sendUsed, "400 The operation cannot be done");
+      });
+    });
+  });
+
+  describe("FK", () => {
+    const role = roles.ADMIN_ROLE;
+    let user;
+    let product;
+    let orders_users;
+    let cart;
+    let order;
+
+    beforeEach(() => {
+      user = {
+        first_name: "Dmitry",
+        last_name: "Sorokin",
+        email: "dimasik@gmail.com",
+        username: "dima",
+        password: "keepInSecret",
+      };
+
+      product = {
+        name: "Biscuits",
+        price: 100,
+        description: "Cockies for yor dinner",
+        category: "Food",
+        preview: "www",
+      };
+
+      orders_users = {
+        user_id: undefined,
+        transaction_id: 100,
+      };
+
+      cart = {
+        user_id: undefined,
+        product_id: undefined,
+        quantity: 10,
+      };
+
+      order = {
+        id: undefined,
+        product_id: undefined,
+        quantity: 10,
+      };
+    });
+    describe("users, orders_users, orders", () => {
+      it("Should delete items in both tables", async () => {
+        const newUser = stringCreator.users(user);
+        await executeQuery(
+          { db, role, tableName: tableNames.USERS, ...newUser },
+          insertValues
+        );
+
+        let selectedUser = await executeQuery(
+          { db, role, tableName: tableNames.USERS, ...user },
+          selectWithUsernameAndPassword
+        );
+
+        // Confirmation that the user has successfully created
+        assert.isObject(selectedUser, "user created");
+
+        orders_users.user_id = selectedUser.id;
+
+        const newOrdersUsers = stringCreator.orders_users(orders_users);
+
+        await executeQuery(
+          { db, role, tableName: tableNames.ORDERS_USERS, ...newOrdersUsers },
+          insertValues
+        );
+
+        let selectedOrdersUsers = await executeQuery(
+          { db, role, tableName: tableNames.ORDERS_USERS, ...orders_users },
+          selectByUserId
+        );
+
+        // Confirmation that the orders_users item has successfully created
+        assert.isObject(selectedOrdersUsers[0], "orders_users created");
+
+        order.product_id = 3;
+        order.id = selectedOrdersUsers[0].order_id;
+
+        const newOrder = stringCreator.orders(order);
+
+        await executeQuery(
+          { db, role, tableName: tableNames.ORDERS, ...newOrder },
+          insertValues
+        );
+
+        let selectedOrder = await executeQuery(
+          { db, role, tableName: tableNames.ORDERS, ...order },
+          selectById
+        );
+
+        //Confirmation that the order item has successfully created
+        assert.isObject(selectedOrder, "order created");
+
+        //Deleting the user
+        await executeQuery(
+          { db, role, tableName: tableNames.USERS, id: selectedUser.id },
+          deleteValuesById
+        );
+
+        selectedOrdersUsers = await executeQuery(
+          { db, role, tableName: tableNames.ORDERS_USERS, ...orders_users },
+          selectByUserId
+        );
+
+        // Confirmation that the orders_users item has successfully removed
+        assert.isUndefined(selectedOrdersUsers[0], "orders_users deleted");
+
+        selectedUser = await executeQuery(
+          { db, role, tableName: tableNames.USERS, ...user },
+          selectWithUsernameAndPassword
+        );
+
+        // Confirmation that the user has successfully removed
+        assert.isUndefined(selectedUser, "user deleted");
+
+        selectedOrder = await executeQuery(
+          { db, role, tableName: tableNames.ORDERS, ...order },
+          selectById
+        );
+
+        // Confirmation that the order item has successfully removed
+        assert.isUndefined(selectedOrder, "order item  deleted");
+      });
+    });
+
+    describe("users, carts", () => {
+      it("Should delete items in both tables", async () => {
+        const newUser = stringCreator.users(user);
+        await executeQuery(
+          { db, role, tableName: tableNames.USERS, ...newUser },
+          insertValues
+        );
+
+        let selectedUser = await executeQuery(
+          { db, role, tableName: tableNames.USERS, ...user },
+          selectWithUsernameAndPassword
+        );
+
+        // Confirmation that the user has successfully created
+        assert.isObject(selectedUser, "user created");
+
+        cart.user_id = selectedUser.id;
+        cart.product_id = 3;
+
+        const newCart = stringCreator.cart(cart);
+
+        await executeQuery(
+          { db, role, tableName: tableNames.CARTS, ...newCart },
+          insertValues
+        );
+
+        let selectedCart = await executeQuery(
+          { db, role, tableName: tableNames.CARTS, ...cart },
+          selectByUserId
+        );
+
+        // Confirmation that the cart item has successfully created
+        assert.isObject(selectedCart[0], "cart created");
+
+        //Deleting the user
+        await executeQuery(
+          { db, role, tableName: tableNames.USERS, id: selectedUser.id },
+          deleteValuesById
+        );
+
+        selectedCart = await executeQuery(
+          { db, role, tableName: tableNames.CARTS, ...cart },
+          selectByUserId
+        );
+
+        // Confirmation that the cart item has successfully removed
+        assert.isUndefined(selectedCart[0], "cart deleted");
+
+        selectedUser = await executeQuery(
+          { db, role, tableName: tableNames.USERS, ...user },
+          selectWithUsernameAndPassword
+        );
+
+        // Confirmation that the user has successfully removed
+        assert.isUndefined(selectedUser, "user deleted");
+      });
+    });
+
+    describe("products, orders, carts", () => {
+      it("Should delete items in both tables", async () => {
+        const newProduct = stringCreator.products(product);
+
+        // getting product id
+        const { id } = await executeQuery(
+          { db, role, tableName: tableNames.PRODUCTS, ...newProduct },
+          insertValues
+        );
+
+        let selectedProduct = await executeQuery(
+          { db, role, tableName: tableNames.PRODUCTS, id },
+          selectById
+        );
+
+        // Confirmation that the user has successfully created
+        assert.isObject(selectedProduct, "product created");
+
+        cart.user_id = 3;
+        cart.product_id = id;
+
+        const newCart = stringCreator.cart(cart);
+
+        await executeQuery(
+          { db, role, tableName: tableNames.CARTS, ...newCart },
+          insertValues
+        );
+
+        const queryCommandForCart = `SELECT * FROM ${tableNames.CARTS} WHERE product_id = ${id};`;
+        let selectedCart = await executeQuery(
+          { db, role, queryCommand: queryCommandForCart },
+          simpleQuery
+        );
+        // Confirmation that the cart item has successfully created
+        assert.isObject(selectedCart[0], "cart created");
+
+        order.id = 1;
+        order.product_id = id;
+
+        const newOrder = stringCreator.orders(order);
+
+        await executeQuery(
+          { db, role, tableName: tableNames.ORDERS, ...newOrder },
+          insertValues
+        );
+
+        const queryCommandForOrder = `SELECT * FROM ${tableNames.ORDERS} WHERE product_id = ${id};`;
+
+        let selectedOrder = await executeQuery(
+          { db, role, queryCommand: queryCommandForOrder },
+          simpleQuery
+        );
+
+        // Confirmation that the order item has successfully created
+        assert.isObject(selectedOrder[0], "order created");
+
+        //Deleting the product
+        await executeQuery(
+          { db, role, tableName: tableNames.PRODUCTS, id: id },
+          deleteValuesById
+        );
+
+        selectedCart = await executeQuery(
+          { db, role, queryCommand: queryCommandForCart },
+          simpleQuery
+        );
+
+        // Confirmation that the cart item has successfully removed
+        assert.isUndefined(selectedCart[0], "cart deleted");
+
+        selectedOrder = await executeQuery(
+          { db, role, queryCommand: queryCommandForOrder },
+          simpleQuery
+        );
+
+        // Confirmation that the cart item has successfully removed
+        assert.isUndefined(selectedOrder[0], "order deleted");
+
+        selectedProduct = await executeQuery(
+          { db, role, tableName: tableNames.PRODUCTS, id },
+          selectById
+        );
+
+        // Confirmation that the user has successfully removed
+        assert.isUndefined(selectedProduct, "product deleted");
+      });
+    });
+  });
 });

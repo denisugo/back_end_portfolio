@@ -158,6 +158,12 @@
  *        description: The operation cannot be done
  */
 const express = require("express");
+const {
+  getCartByUserMiddleware,
+  postCartMiddleware,
+  putCartMiddleware,
+  deleteCartMiddleware,
+} = require("../middlewares/cartMiddlewares");
 
 const {
   loginVerification,
@@ -171,17 +177,12 @@ const router = express.Router({ mergeParams: true });
 // Checkout endpoint
 router.use("/checkout", checkoutRouter);
 
-router.get("/", loginVerification, userIdVerification, (req, res, next) => {});
+router.get("/", loginVerification, userIdVerification, getCartByUserMiddleware);
 
-router.post("/", loginVerification, userIdVerification, (req, res, next) => {});
+router.post("/", loginVerification, userIdVerification, postCartMiddleware);
 
-router.put("/", loginVerification, userIdVerification, (req, res, next) => {});
+router.put("/", loginVerification, userIdVerification, putCartMiddleware);
 
-router.delete(
-  "/",
-  loginVerification,
-  userIdVerification,
-  (req, res, next) => {}
-);
+router.delete("/", loginVerification, userIdVerification, deleteCartMiddleware);
 
 module.exports = router;

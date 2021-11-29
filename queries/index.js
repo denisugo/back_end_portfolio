@@ -32,7 +32,8 @@ const executeQuery = async (options, queryCallback = async () => {}) => {
 
 const simpleQuery = async ({ db, queryCommand }) => {
   try {
-    await db.query(queryCommand);
+    const executed = await db.query(queryCommand);
+    if (executed) if (executed.rows) return executed.rows;
   } catch (error) {
     //console.error(error);
   }
