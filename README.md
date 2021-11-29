@@ -1,58 +1,28 @@
 # Endpoints
 
- <br />
- 
-## Get
+## Links
 
-- /api/docs
-- /api/v1/users/:id/cart
-- /api/v1/users/:id/orders
-- /api/v1/users/:id/orders/:id
-- /api/v1/products
-- /api/v1/products/:id
+- All endpoints have the following prefix api/v1/
+- The endpoint documentation is on api/docs/
 
  <br />
 
-## POST
+# SQL
 
-- /api/v1/login
-- /api/v1/register
-- /api/v1/users/:id/cart
-- /api/v1/users/:id/orders
-
-Only for admins
-
-- /api/v1/products
+![Diagram io](/Back-end-portfolio.png)
 
  <br />
-
-## PUT
-
-- /api/v1/users/:id
-- /api/v1/users/:id/cart
-- /api/v1/users/:id/orders/:id
-
-Only for admins
-
-- /api/v1/products/:id
-
-<br />
-
-## DELETE
-
-- /api/v1/users/:id/cart
-
-Only for admins
-
-- /api/v1/users/:id
-- /api/v1/products/:id
-- /api/v1/users/:id/orders/:id
-
-This API doesn't apply any hash on passwords and other data. This is beacuse the project will not go to the production phase.
 
 # Pros & Cons
 
+## Pros
+
+- Several roles are used in the database to improve authorization
+- Tests cover all important database settings
+- Well developed auth schema
+- Easy-to-use endpoint documentation builded with _Swagger_
+- All SQL query function could be reused in other projects
+
 ## Cons
 
-- Not all constants were stored in config file
 - Query scripts doesn't provide proper check, if some SQL constrain rules are violeted. It just returns _undefined_ when an error is trown
