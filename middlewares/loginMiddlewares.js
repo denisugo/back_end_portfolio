@@ -9,9 +9,12 @@ const loginVerification = (req, res, next) => {
   } catch (error) {
     console.error(error);
   }
-  res.status(401).send("Unauthorized");
+  res.status(401).clearCookie("connect.sid").send("Unauthorized");
 };
 
+/**
+ * This function wiil check if user id is correct
+ */
 const userIdVerification = (req, res, next) => {
   try {
     if (req.user.id === parseInt(req.params.id)) return next();

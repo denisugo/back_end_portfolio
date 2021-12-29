@@ -311,11 +311,14 @@ const selectOrdersByUserId = async ({ db, user_id }) => {
   const params = [user_id];
   const query = `SELECT orders.id AS id, 
   orders_users.shipped AS shipped, 
-  orders.product_id AS product_id, 
+  products.name AS name,
+  orders.product_id AS product_id,
   orders.quantity AS quantity
   FROM orders_users
   JOIN orders
   ON orders.id = orders_users.order_id
+  JOIN products
+  ON products.id = orders.product_id
   WHERE orders_users.user_id = $1
   ORDER BY 1 DESC;`;
   try {

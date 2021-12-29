@@ -86,11 +86,16 @@
  *
  *    responses:
  *      200:
- *        description: If category is invalid, sends back all products
+ *        description: If category is invalid, sends back all products. If user is not signed in, user response will be undefined
  *        content:
  *          application/json:
  *            schema:
- *              $ref: '#/components/schemas/Products'
+ *              type: object
+ *              properties:
+ *                products:
+ *                  $ref: '#/components/schemas/Products'
+ *                user:
+ *                  $ref: '#/components/schemas/User_response'
  */
 
 /**

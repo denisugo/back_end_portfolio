@@ -6,18 +6,15 @@
  *      Order:
  *        type: object
  *        properties:
- *          order_id:
- *              type: integer
- *              description: The id of an order
  *          product_id:
  *              type: integer
  *              description: The id of a product
  *          quantity:
  *              type: integer
  *              description: The quantity of a product
- *          shipped:
- *              type: boolean
- *              description: The status of an order
+ *          name:
+ *              type: string
+ *              description: The name of an order item
  *
  *      Update_order:
  *        type: object
@@ -50,9 +47,18 @@
  *              description: The id of an order
  *
  *      Orders:
- *        type: array
- *        items:
- *          $ref: '#/components/schemas/Order'
+ *        type: object
+ *        properties:
+ *          order_id:
+ *            type: object
+ *            properties:
+ *              shipped:
+ *                type: boolean
+ *                description: Order shipment status
+ *              products:
+ *                type: array
+ *                items:
+ *                  $ref: '#/components/schemas/Order'
  *
  */
 
@@ -78,11 +84,12 @@
  *
  *    responses:
  *      200:
- *        description: Orders object sent
+ *        description: Orders object sent. if user is not signed in, user response will be undefined
  *        content:
  *          application/json:
  *            schema:
  *              $ref: '#/components/schemas/Orders'
+ *
  */
 
 /**

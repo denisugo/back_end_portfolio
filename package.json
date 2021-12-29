@@ -7,6 +7,7 @@
     "test": "mocha --watch"
   },
   "dependencies": {
+    "cors": "^2.8.5",
     "debug": "~2.6.9",
     "dotenv": "^10.0.0",
     "express": "~4.16.1",
@@ -17,6 +18,7 @@
     "passport": "^0.5.0",
     "passport-local": "^1.0.0",
     "pg": "^8.7.1",
+    "stripe": "^8.195.0",
     "swagger-jsdoc": "^6.1.0",
     "swagger-ui-express": "^4.1.6"
   },

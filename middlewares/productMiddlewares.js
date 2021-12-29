@@ -22,14 +22,14 @@ const getProductsByCategoryMiddleware = async (req, res, next) => {
     selectByCategory
   );
 
-  if (selected) return res.send(selected);
+  if (selected) return res.send({ user: req.user, products: selected });
 
   const allProducts = await executeQuery(
     { db, role, tableName },
     selectByTableName
   );
 
-  if (allProducts) return res.send(allProducts);
+  if (allProducts) return res.send({ user: req.user, products: allProducts });
 
   return res.status(500).send("");
 };

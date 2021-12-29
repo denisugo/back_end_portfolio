@@ -34,6 +34,73 @@
  *            description: Indicates whether the user is an admin or not
  */
 
+/**
+ * @swagger
+ * tags:
+ *  name: Users
+ *  description: Api to your user's details
+ */
+
+/**
+ * @swagger
+ * users/:
+ *  get:
+ *    summary: allows you to get user's details
+ *    tags: [Users]
+ *    parameters:
+ *      - in: path
+ *        name: id
+ *        required: true
+ *        schema:
+ *          type: integer
+ *
+ *    responses:
+ *      200:
+ *        description: Your detail has been sent
+ */
+
+/**
+ * @swagger
+ * users/{id}/logout:
+ *  get:
+ *    summary: allows you to log user out
+ *    tags: [Users]
+ *    parameters:
+ *      - in: path
+ *        name: id
+ *        required: true
+ *        schema:
+ *          type: integer
+ *    responses:
+ *      200:
+ *        description: You have been logged out
+ */
+
+/**
+ * @swagger
+ * users/{id}:
+ *  put:
+ *    summary: allows you to change user's details
+ *    tags: [Users]
+ *    requestBody:
+ *      required: true
+ *      content:
+ *        application/json:
+ *          schema:
+ *            $ref: '#/components/schemas/Update'
+ *    parameters:
+ *      - in: path
+ *        name: id
+ *        required: true
+ *        schema:
+ *          type: integer
+ *
+ *    responses:
+ *      200:
+ *        description: Your detail has been updated
+ *      400:
+ *        description: Cannot be updated
+ */
 const express = require("express");
 const router = express.Router();
 const {
@@ -56,7 +123,15 @@ router.use("/:id/orders", ordersRouter);
 router.use("/:id/cart", cartRouter);
 
 /* GET user profile. */
-router.get("/:id", loginVerification, userIdVerification, getUserMiddleware);
+// router.get("/:id", loginVerification, userIdVerification, getUserMiddleware);
+router.get("/", loginVerification, getUserMiddleware);
+
+/* Logout user. */
+router.get("/:id/logout", (req, res) => {
+  console.log("logging out");
+  req.logout();
+  res.clearCookie("connect.sid").send("Logged out");
+});
 
 /* PUT user profile. */
 router.put("/:id", loginVerification, userIdVerification, updateUserMiddleware);

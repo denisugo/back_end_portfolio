@@ -7,7 +7,9 @@ const {
   insertValues,
   updateValuesByUserIdAndProductId,
   deleteValuesByUserIdAndProductId,
+  selectById,
 } = require("../queries");
+const { asyncMap } = require("../utils/asyncFunc");
 
 const role = roles.REGISTERED_ROLE;
 const tableName = tableNames.CARTS;
@@ -20,15 +22,43 @@ const getCartByUserMiddleware = async (req, res, nex) => {
     selectByUserId
   );
 
+  //TODO: Should be refactored, this implementation is too slow
   if (selected) {
+    await asyncMap(selected, async (item) => {
+      const product = await executeQuery(
+        { db, role, tableName: tableNames.PRODUCTS, id: item.product_id },
+        selectById
+      );
+
+      if (product)
+        return {
+          quantity: item.quantity,
+          ...product,
+        };
+    });
+    //  selected.map(async (item) => {
+    //   const product = await executeQuery(
+    //     { db, role, tableName: tableNames.PRODUCTS, id: item.product_id },
+    //     selectById
+    //   );
+    //   console.log(product);
+    //   if (product)
+    //     return {
+    //       quantity: item.quantity,
+    //       ...product,
+    //     };
+    // });
     return res.send(selected);
+    // return res.send({ user: req.user, cart: selected });
   }
+  return res.status(500).send("");
 };
 
 const postCartMiddleware = async (req, res, nex) => {
   //insertValues
   const user_id = req.user.id;
   const body = req.body;
+
   if (body) {
     if (body.product_id && body.quantity) {
       body.user_id = user_id;
@@ -75,7 +105,7 @@ const deleteCartMiddleware = async (req, res, nex) => {
   if (body) {
     const product_id = body.product_id;
     if (product_id) {
-      const deleted = executeQuery(
+      const deleted = await executeQuery(
         { db, tableName, role, user_id, product_id },
         deleteValuesByUserIdAndProductId
       );

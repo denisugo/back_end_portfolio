@@ -65,8 +65,10 @@
  *          application/json:
  *            schema:
  *              $ref: '#/components/schemas/User_response'
+ *      400:
+ *        description: Bad request when some data is missing
  *      401:
- *        description: Unauthorized
+ *        description: Unauthorized when provided data is incorrect
  */
 
 const express = require("express");
@@ -80,6 +82,10 @@ router.get("/", (req, res, next) => {
 
 router.post(
   "/",
+  (req, res, next) => {
+    console.log(req.body);
+    next();
+  },
   passport.authenticate("local", { session: true }),
   (req, res, next) => {
     res.send(req.user);

@@ -46,6 +46,9 @@ const {
   putCartMiddleware,
   deleteCartMiddleware,
 } = require("../middlewares/cartMiddlewares");
+const {
+  postCheckoutMiddleware,
+} = require("../middlewares/checkoutMiddlewares");
 
 describe("Middlewares", () => {
   // mocking functions
@@ -56,6 +59,13 @@ describe("Middlewares", () => {
   const res = {
     status: (code) => {
       return {
+        clearCookie: () => {
+          return {
+            send: (message) => {
+              sendUsed = `${code} ${message}`;
+            },
+          };
+        },
         send: (message) => {
           sendUsed = `${code} ${message}`;
         },
@@ -366,8 +376,8 @@ describe("Middlewares", () => {
         await getProductsByCategoryMiddleware(req, res, next);
 
         assert.strictEqual(nextUsed, false);
-        assert.isArray(sendUsed);
-        assert.isObject(sendUsed[0]);
+        assert.isArray(sendUsed.products);
+        assert.isObject(sendUsed.products[0]);
       });
       it("Should send back a list with all products", async () => {
         const category = "The Kroger__"; // wrong category
@@ -376,8 +386,8 @@ describe("Middlewares", () => {
         await getProductsByCategoryMiddleware(req, res, next);
 
         assert.strictEqual(nextUsed, false);
-        assert.isArray(sendUsed);
-        assert.isObject(sendUsed[0]);
+        assert.isArray(sendUsed.products);
+        assert.isObject(sendUsed.products[0]);
       });
     });
 
@@ -463,7 +473,8 @@ describe("Middlewares", () => {
         const description = "Clear your skin";
         const price = 100;
         const category = "health";
-        const preview = "treasure";
+        const preview =
+          "https://images.unsplash.com/photo-1620916566398-39f1143ab7be?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=987&q=80";
         const id = 1;
 
         const queryCommand = `UPDATE ${tableName} SET (name, description, price, category, preview) = ('${name}', '${description}', '${price}', '${category}', '${preview}') WHERE id = ${id};`;
@@ -514,7 +525,8 @@ describe("Middlewares", () => {
         const description = "Clear your skin";
         const price = 100;
         const category = "health";
-        const preview = "treasure";
+        const preview =
+          "https://images.unsplash.com/photo-1620916566398-39f1143ab7be?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=987&q=80";
         const id = 1;
 
         const queryCommand = `INSERT INTO ${tableName} VALUES (${id}, '${name}', '${description}', ${price}, '${category}','${preview}');`;
@@ -573,26 +585,28 @@ describe("Middlewares", () => {
     });
 
     describe("getOrdersByUserMiddleware", () => {
-      it("Should send back an array", async () => {
+      it("Should send back an object", async () => {
         const req = {
           user: { id: 3 }, // id=3 in real db for testing purposes
         };
 
         await getOrdersByUserMiddleware(req, res, next);
-
-        assert.isArray(sendUsed);
-        assert.isObject(sendUsed[0]);
+        console.log(sendUsed);
+        assert.isArray(sendUsed[1].products); // 1 - is the order id in db
+        assert.isObject(sendUsed[1].products[0]);
+        assert.isBoolean(sendUsed[1].shipped);
         assert.strictEqual(nextUsed, false);
       });
-      it("Should send back an empty array when id is incorrect", async () => {
+      it("Should send back an empty object when id is incorrect", async () => {
         const req = {
           user: { id: 1000 },
         };
 
         await getOrdersByUserMiddleware(req, res, next);
 
-        assert.isArray(sendUsed);
-        assert.isUndefined(sendUsed[0]);
+        //assert.isArray(sendUsed[1]);
+        assert.isObject(sendUsed);
+        assert.isUndefined(sendUsed[1]); // 1 - is the order id in db
         assert.strictEqual(nextUsed, false);
       });
     });
@@ -600,6 +614,14 @@ describe("Middlewares", () => {
     describe("postOrderMiddleware", () => {
       const user_id = 1; // With this user_id order table will be reset by another test
       const transaction_id = 100;
+
+      beforeEach(async () => {
+        const tableName = tableNames.CARTS;
+        const queryCommand = `INSERT INTO ${tableName} ( user_id, product_id, quantity) VALUES( ${user_id}, ${1}, ${1});`;
+        const role = roles.ADMIN_ROLE;
+        await executeQuery({ db, role, queryCommand }, simpleQuery);
+      });
+
       afterEach(async () => {
         const queryCommand = `DELETE FROM orders_users WHERE user_id = ${user_id}`;
         const role = roles.ADMIN_ROLE;
@@ -611,13 +633,6 @@ describe("Middlewares", () => {
           user: { id: user_id },
           body: {
             transaction_id,
-            cart: [
-              {
-                user_id,
-                product_id: 3,
-                quantity: 5,
-              },
-            ],
           },
         };
 
@@ -625,6 +640,14 @@ describe("Middlewares", () => {
 
         assert.strictEqual(sendUsed, "201 Your order has been placed");
         assert.strictEqual(nextUsed, false);
+
+        const queryCommand = `SELECT * FROM ${tableNames.CARTS} WHERE user_id = ${user_id}`;
+        const role = roles.ADMIN_ROLE;
+        const selected = await executeQuery(
+          { db, role, queryCommand },
+          simpleQuery
+        );
+        assert.strictEqual(selected.length, 0);
       });
       it("Should not post if the cart hasnt any item", async () => {
         const req = {
@@ -761,7 +784,9 @@ describe("Middlewares", () => {
         await getCartByUserMiddleware(req, res, next);
 
         assert.isArray(sendUsed);
+        // assert.isArray(sendUsed.cart);
         assert.isObject(sendUsed[0]);
+        // assert.isObject(sendUsed.cart[0]);
         assert.strictEqual(nextUsed, false);
       });
       it("Should send back an empty array when id is incorrect", async () => {
@@ -772,7 +797,9 @@ describe("Middlewares", () => {
         await getCartByUserMiddleware(req, res, next);
 
         assert.isArray(sendUsed);
+        // assert.isArray(sendUsed.cart);
         assert.isUndefined(sendUsed[0]);
+        // assert.isUndefined(sendUsed.cart[0]);
         assert.strictEqual(nextUsed, false);
       });
     });
@@ -909,6 +936,36 @@ describe("Middlewares", () => {
 
         assert.strictEqual(nextUsed, false);
         assert.strictEqual(sendUsed, "400 The operation cannot be done");
+      });
+    });
+  });
+
+  describe("checkoutMiddleware", () => {
+    describe("postCheckoutMiddleware", () => {
+      it("Should post a checkout", async () => {
+        const user_id = 3; // This user already has its cart
+        const req = {
+          user: { id: user_id },
+        };
+
+        await postCheckoutMiddleware(req, res, next);
+
+        assert.isObject(sendUsed);
+        assert.isString(sendUsed.clientSecret);
+        assert.strictEqual(sendUsed.amount, 450); // this user has only one item in his cart with price of 90 and quantity of 5
+
+        assert.strictEqual(nextUsed, false);
+      });
+      it("Should not post if the user has not items in his cart", async () => {
+        const user_id = 1; // Doesnt have any items
+        const req = {
+          user: { id: user_id },
+        };
+
+        await postCheckoutMiddleware(req, res, next);
+
+        assert.strictEqual(sendUsed, "404 No cart found");
+        assert.strictEqual(nextUsed, false);
       });
     });
   });

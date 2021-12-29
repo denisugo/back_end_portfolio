@@ -4,6 +4,7 @@ const path = require("path");
 const logger = require("morgan");
 const session = require("express-session");
 const passport = require("passport");
+const cors = require("cors");
 const authSetup = require("./auth/index"); // Should execute passport.use code
 
 const swaggerJsdoc = require("swagger-jsdoc");
@@ -14,9 +15,12 @@ const usersRouter = require("./routes/users");
 const loginRouter = require("./routes/login");
 const registerRouter = require("./routes/register");
 
+require("dotenv").config();
+
 const app = express();
 
 // basic setup
+app.use(cors({ origin: process.env.ORIGIN, credentials: true }));
 app.use(logger("dev"));
 app.use(
   session({
@@ -62,6 +66,7 @@ const options = {
   },
   apis: [
     "./routes/login.js",
+    "./routes/register.js",
     "./routes/users.js",
     "./routes/products.js",
     "./routes/orders.js",

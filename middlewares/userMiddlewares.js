@@ -10,7 +10,7 @@ const { tableNames, roles } = require("../config").constants;
 const tableName = tableNames.USERS;
 
 /**
- * Returns teh user, but the password is excluded
+ * Returns the user, but the password is excluded
  */
 const getUserMiddleware = (req, res, next) => {
   res.send(req.user);

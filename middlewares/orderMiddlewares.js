@@ -8,9 +8,11 @@ const {
   insertValues,
   updateValuesByIdAndProductId,
   deleteValuesByOrderId,
+  selectById,
+  selectByUserId,
+  deleteValuesByUserIdAndProductId,
 } = require("../queries");
-
-//TODO: Should be checked if an order's user_id and req -> user -> id are the same
+const { asyncMap, asyncForEach } = require("../utils/asyncFunc");
 
 // This middleware will not be used in production
 const getOrderByIdMiddleware = async (req, res, next) => {
@@ -31,8 +33,45 @@ const getOrdersByUserMiddleware = async (req, res, next) => {
     { db, role, user_id },
     selectOrdersByUserId
   );
+
+  //TODO: Temporary solution. Should be refactored, this implementation is too slow
+  const selectedObject = {};
   if (selected) {
-    return res.send(selected);
+    await asyncForEach(selected, async (item) => {
+      // const product = await executeQuery(
+      //   { db, role, tableName: tableNames.PRODUCTS, id: item.product_id },
+      //   selectById
+      // );
+      // if (product) {
+
+      if (selectedObject[item.id])
+        selectedObject[item.id].products.push({
+          name: item.name,
+          product_id: item.product_id,
+          quantity: item.quantity,
+          //...product,
+        });
+      else
+        selectedObject[item.id] = {
+          shipped: item.shipped,
+          products: [
+            {
+              name: item.name,
+              product_id: item.product_id,
+              quantity: item.quantity,
+            },
+          ],
+          // products: [{ quantity: item.quantity, ...product }],
+        };
+      // }
+      // return {
+      //   ...item,
+      //   name: product.name,
+      //   preview: product.preview,
+      // };
+    });
+    return res.send(selectedObject);
+    // return res.send(selected);
   }
   return res.status(500).send("An error occured, please try again");
 };
@@ -40,27 +79,34 @@ const getOrdersByUserMiddleware = async (req, res, next) => {
 /**
  * Could be uset in the checkout endpoint
  */
+
+// TODO: Should be refactored. This implementation is to slow
 const postOrderMiddleware = async (req, res, next) => {
   if (req.body) {
-    const cart = req.body.cart;
+    const role = roles.REGISTERED_ROLE;
+    let tableName = tableNames.CARTS;
+
+    const user_id = req.user.id;
+    const cart = await executeQuery(
+      { db, role, tableName, user_id },
+      selectByUserId
+    ); //req.body.cart;
     const transaction_id = req.body.transaction_id;
     if (cart && transaction_id) {
-      const user_id = req.user.id;
+      // Getting an order id from orders_users
       const ordersUsersQueryValuesColumns = stringCreator.orders_users({
         user_id,
         transaction_id,
       });
-      let tableName = tableNames.ORDERS_USERS;
-      const role = roles.REGISTERED_ROLE;
+      tableName = tableNames.ORDERS_USERS;
 
       const { order_id } = await executeQuery(
         { db, tableName, role, ...ordersUsersQueryValuesColumns },
         insertValues
       );
 
+      // Inserting oreder items to orders table
       if (order_id) {
-        tableName = tableNames.ORDERS;
-
         const allInsertedItems = [];
 
         for (const item of cart) {
@@ -70,14 +116,21 @@ const postOrderMiddleware = async (req, res, next) => {
           };
           const ordersQueryValuesColumns = stringCreator.orders(orderObject);
 
+          tableName = tableNames.ORDERS;
           const inserted = await executeQuery(
             { db, tableName, role, ...ordersQueryValuesColumns },
             insertValues
           );
 
+          //TODO: remove items from cart here
+          tableName = tableNames.CARTS;
+          await executeQuery(
+            { db, tableName, role, user_id, product_id: item.product_id },
+            deleteValuesByUserIdAndProductId
+          );
+
           allInsertedItems.push(inserted);
         }
-
         if (allInsertedItems && allInsertedItems.length === cart.length)
           return res.status(201).send("Your order has been placed");
       }

@@ -72,11 +72,13 @@
  *
  *    responses:
  *      200:
- *        description: Orders object sent
+ *        description: Orders object sent. If user is not signed in, user response will be undefined
  *        content:
  *          application/json:
  *            schema:
  *              $ref: '#/components/schemas/Cart_items'
+ *      500:
+ *        description: An error occured
  */
 
 /**
@@ -170,9 +172,9 @@ const {
   userIdVerification,
 } = require("../middlewares/loginMiddlewares");
 
-const checkoutRouter = require("./checkout");
-
 const router = express.Router({ mergeParams: true });
+
+const checkoutRouter = require("./checkout");
 
 // Checkout endpoint
 router.use("/checkout", checkoutRouter);
