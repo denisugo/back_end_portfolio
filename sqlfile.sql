@@ -54,7 +54,7 @@ CREATE TABLE public.orders_users (
     order_id integer NOT NULL,
     user_id integer NOT NULL,
     shipped boolean DEFAULT false NOT NULL,
-    transaction_id integer NOT NULL
+    transaction_id character varying(60) NOT NULL
 );
 
 
@@ -194,6 +194,7 @@ COPY public.carts (user_id, product_id, quantity) FROM stdin;
 --
 
 COPY public.orders (id, product_id, quantity) FROM stdin;
+1454	1	1
 1	3	5
 \.
 
@@ -203,6 +204,7 @@ COPY public.orders (id, product_id, quantity) FROM stdin;
 --
 
 COPY public.orders_users (order_id, user_id, shipped, transaction_id) FROM stdin;
+1454	1	f	pi_3KC1rKI6OSqfLBcY0SZNQlTh
 1	3	f	10
 \.
 
@@ -212,9 +214,12 @@ COPY public.orders_users (order_id, user_id, shipped, transaction_id) FROM stdin
 --
 
 COPY public.products (id, name, description, price, category, preview) FROM stdin;
-12	Vichy	New liquid	200	Care	www
-1	Cream	Clear your skin	100	health	treasure
-3	Oil	NoDelete	90	health	www
+3	Oil	NoDelete	90	health	https://images.unsplash.com/photo-1633171029787-3a1022cfc922?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1674&q=80
+10	HomeOffice	New energy pills for your productive life	250	energy	https://images.unsplash.com/photo-1612475498158-014b71f98625?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=2028&q=80
+13	Noname tabs	Open it and try to survive	10	other	https://images.unsplash.com/photo-1550572017-26b5655c1e8c?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1674&q=80
+15	Blue tab	Self explaining name	100	health	https://images.unsplash.com/photo-1519994083223-e72116e38b7e?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=2070&q=80
+12	Vichy	New liquid	200	health	https://images.unsplash.com/photo-1556227834-09f1de7a7d14?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=987&q=80
+1	Cream	Clear your skin	100	health	https://images.unsplash.com/photo-1620916566398-39f1143ab7be?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=987&q=80
 \.
 
 
@@ -224,6 +229,7 @@ COPY public.products (id, name, description, price, category, preview) FROM stdi
 
 COPY public.users (id, first_name, last_name, email, username, is_admin, password) FROM stdin;
 3	Jonny	TestNoDelete	JonnyTest@gmail.com	jTest	t	anotherSecret
+2071	Froggre	Chen	kim@kim.korea	kim	f	NewPass
 2	Dave	Sinclair	\tdave.sin@yahoo.com	davy000	f	treasure
 1	Joe	Barbora	joe_barbora@gmail.com	jb	t	secret
 \.
@@ -233,21 +239,21 @@ COPY public.users (id, first_name, last_name, email, username, is_admin, passwor
 -- Name: orders_users_order_id_seq; Type: SEQUENCE SET; Schema: public; Owner: denis
 --
 
-SELECT pg_catalog.setval('public.orders_users_order_id_seq', 768, true);
+SELECT pg_catalog.setval('public.orders_users_order_id_seq', 1454, true);
 
 
 --
 -- Name: product_id_seq; Type: SEQUENCE SET; Schema: public; Owner: denis
 --
 
-SELECT pg_catalog.setval('public.product_id_seq', 1222, true);
+SELECT pg_catalog.setval('public.product_id_seq', 1903, true);
 
 
 --
 -- Name: user_id_seq; Type: SEQUENCE SET; Schema: public; Owner: denis
 --
 
-SELECT pg_catalog.setval('public.user_id_seq', 1750, true);
+SELECT pg_catalog.setval('public.user_id_seq', 2983, true);
 
 
 --
@@ -421,6 +427,7 @@ GRANT USAGE ON SEQUENCE public.orders_users_order_id_seq TO admin_role;
 
 GRANT SELECT ON TABLE public.products TO public_role;
 GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.products TO admin_role;
+GRANT SELECT ON TABLE public.products TO registered_role;
 
 
 --
