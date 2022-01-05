@@ -18,11 +18,11 @@ ORIGIN = http://localhost:3000
 SECRET_ENCRYPTION_KEY = micro_Cat
 SECRET_STRIPE_KEY = Your_Stripr_SK_Key
 
-SQL_USER = Your_SQL_Username
-SQL_PASSWORD = Your_SQL_Password
+SQL_USER = back_end
+SQL_PASSWORD = secret
 SQL_PORT = 5432
 SQL_HOST = localhost
-SQL_DATABASE = Your_SQL_DB_Name
+SQL_DATABASE = back_end_portfolio
 ```
 
  <br />
